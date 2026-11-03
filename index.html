@@ -1,1 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ENCS4380 - Module 1: First-Order Time Response</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="page header-bar">
+    <span class="course-name">ENCS4380 Interfacing Techniques</span>
+    <span class="module-tag">Module 1: First-Order Sensor</span>
+  </header>
+  <main class="page">
+    <!-- Title and Model Equations -->
+    <section class="title-section">
+      <div>
+        <h1>First-Order Sensor Time Response</h1>
+        <p class="subtitle">Adjust the input, time constant (τ), and static gain (K) to observe how a first-order sensor lags behind the ideal input.</p>
+      </div>
+      <div class="equations">
+        <p>τ dy/dt + y = K x(t)</p>
+        <p>G(s) = K / (τs + 1)</p>
+      </div>
+    </section>
+    <!-- Predict, Then Check -->
+    <section class="card predict-box">
+      <div class="predict-text">
+        <h2>Predict, then check</h2>
+        <p id="questionText"></p>
+      </div>
+      <div class="predict-controls">
+        <select id="answerSelect" aria-label="Select prediction"></select>
+        <button id="checkBtn" type="button">Check Answer</button>
+      </div>
+      <p id="feedbackText" class="feedback"></p>
+    </section>
+    <!-- Controls Panel -->
+    <section class="card controls-box">
+      <div class="controls-top">
+        <div>
+          <h2>System Parameters</h2>
+          <p id="scenarioNote" class="muted"></p>
+        </div>
+        <div class="mode-group">
+          <span>Input Type:</span>
+          <label><input type="radio" name="mode" value="step" checked> Step</label>
+          <label><input type="radio" name="mode" value="ramp"> Ramp</label>
+        </div>
+        <div class="preset-group">
+          <button id="teaBtn" type="button" class="btn-outline">Tea Example (20 to 80 °C)</button>
+          <button id="unitBtn" type="button" class="btn-outline">Unit Step</button>
+        </div>
+      </div>
+      <div class="sliders-grid">
+        <div class="slider-item">
+          <div class="slider-header"><label for="tau">Time constant (τ)</label><span id="tauVal" class="mono">10.0 s</span></div>
+          <input type="range" id="tau" min="0.5" max="25" step="0.1" value="10">
+          <div class="slider-bounds"><span>0.5 s</span><span>25 s</span></div>
+        </div>
+        <div class="slider-item">
+          <div class="slider-header"><label for="gain">Static gain (K)</label><span id="gainVal" class="mono">1.0</span></div>
+          <input type="range" id="gain" min="0.5" max="5" step="0.1" value="1">
+          <div class="slider-bounds"><span>0.5</span><span>5.0</span></div>
+        </div>
+        <div class="slider-item">
+          <div class="slider-header"><label id="amountLabel" for="amount">Step magnitude (A)</label><span id="amountVal" class="mono">60</span></div>
+          <input type="range" id="amount" min="1" max="100" step="1" value="60">
+          <div class="slider-bounds"><span id="amountMin">1</span><span id="amountMax">100</span></div>
+        </div>
+      </div>
+    </section>
+    <!-- Plots Grid -->
+    <div class="plots-grid">
+      <section class="card plot-card">
+        <div class="card-header"><h2>Time Response</h2></div>
+        <div id="timePlot" class="plot-box"></div>
+        <p id="timeNote" class="muted"></p>
+      </section>
+      <section class="card plot-card">
+        <div class="card-header"><h2>Log Error-Fraction</h2><span id="slopeVal" class="mono bold"></span></div>
+        <div id="logPlot" class="plot-box"></div>
+        <p id="logNote" class="muted"></p>
+      </section>
+    </div>
+    <!-- Key Measurements -->
+    <section class="card">
+      <h2>Live Measurements</h2>
+      <div id="metricsGrid" class="metrics-grid"></div>
+    </section>
+    <!-- Validation Check 1 -->
+    <section class="card">
+      <div class="card-header"><h2>Validation Check 1 (Step Response Benchmarks)</h2><span id="checkSummary" class="mono bold pass"></span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Benchmark Point</th><th>Expected Change</th><th>Computed Change</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>t = τ (63.2% of KA)</td><td id="expected1" class="mono"></td><td id="computed1" class="mono"></td><td id="result1" class="mono bold"></td></tr>
+            <tr><td>t = 3τ (95.0% of KA)</td><td id="expected2" class="mono"></td><td id="computed2" class="mono"></td><td id="result2" class="mono bold"></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
 
