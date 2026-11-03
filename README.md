@@ -22,6 +22,13 @@ Open `index.html` in a browser with an internet connection.
 
 https://motazalt.github.io/encs4380-dynamics-flameseer/
 
+## Team Members
+
+- Ameer AbdelJabbar
+- Motaz Tyseer
+- Nidal AbuHammad
+- Karam Naji
+
 ## Project Status
 
 Module 1 completed. Modules 2–4 pending.
