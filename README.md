@@ -32,12 +32,12 @@ For GitHub Pages, upload the **contents** of this directory to the repository's 
 
 ## Team 10 — Module ownership
 
-| Team member | Module |
-| --- | --- |
-| Motaz Tayseer | Module 1 — First-order time response |
-| Karam Naji | Module 2 — First-order frequency response |
-| Nidal AbuHammad | Module 3 — Second-order response and state space |
-| Ameer AbdelJabbar | Module 4 — Guess the sensor |
+| Team member | Student ID | Module |
+| --- | --- | --- |
+| Motaz Tayseer | 1231596 | Module 1 — First-order time response |
+| Karam Naji | 1230062 | Module 2 — First-order frequency response |
+| Nidal AbuHammad | 1231481 | Module 3 — Second-order response and state space |
+| Ameer AbdelJabbar | 1231192 | Module 4 — Guess the sensor |
 
 ## Measurements and scoring
 
