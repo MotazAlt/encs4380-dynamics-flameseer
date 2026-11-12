@@ -1,4 +1,4 @@
-// Module 2: first-order frequency response and shared module navigation.
+// Module 2: First-Order Frequency Response & Navigation
 (() => {
   'use strict';
 
@@ -9,28 +9,27 @@
   const OMEGA_MAX = 10000;
   const RAD_TO_DEG = 180 / Math.PI;
   const state = { tau: 0.2, omega: 2 };
-  const modules = ['module-1', 'module-2', 'module-3', 'module-4', 'validation'];
+  const modules = ['module-1', 'module-2', 'module-3', 'module-4', 'validation', 'about'];
   const moduleNames = {
     'module-1': '01 / First-Order Time Response',
     'module-2': '02 / First-Order Frequency Response',
     'module-3': '03 / Second-Order Response',
     'module-4': '04 / Guess the Sensor',
-    validation: 'V / Validation Checks'
+    validation: 'V / Validation Checks',
+    about: 'About / Team 10'
   };
   let currentModule = 'module-1';
-  let framePending = false;
 
-  // 1. First-order steady-state response to x(t) = sin(omega * t).
-  // Normalized magnitude M; phase is negative because output lags input.
+  // First-order frequency response: M = 1 / sqrt(1 + (omega * tau)^2), phi = -atan(omega * tau)
   function magnitude(omega, tau) {
-    return 1 / Math.hypot(1, omega * tau);
+    return 1 / Math.sqrt(1 + (omega * tau) ** 2);
   }
   function phase(omega, tau) {
     return -Math.atan(omega * tau);
   }
   function maxTau(hertz, allowedErrorPercent) {
-    const minimumMagnitude = 1 - allowedErrorPercent / 100;
-    return Math.sqrt(1 / (minimumMagnitude ** 2) - 1) / (2 * Math.PI * hertz);
+    const M = 1 - allowedErrorPercent / 100;
+    return Math.sqrt(1 / (M * M) - 1) / (2 * Math.PI * hertz);
   }
   function sig(value, digits = 4) {
     return Number(value.toPrecision(digits)).toString();
@@ -53,7 +52,6 @@
       `Enter a value from ${min} to ${max}.`;
   }
 
-  // 2. Synchronize the logarithmic sliders and exact-value number inputs.
   function syncControls() {
     $('freqTauSlider').value = Math.log10(state.tau);
     $('freqOmegaSlider').value = Math.log10(state.omega);
@@ -71,19 +69,9 @@
     state.tau = tau;
     state.omega = omega;
     syncControls();
-    queueRender();
+    if (currentModule === 'module-2') renderFrequency();
   }
 
-  function queueRender() {
-    if (currentModule !== 'module-2' || framePending) return;
-    framePending = true;
-    requestAnimationFrame(() => {
-      framePending = false;
-      renderFrequency();
-    });
-  }
-
-  // 3. Update amplitude, phase, cutoff and signed dynamic error.
   function updateMetrics() {
     const M = magnitude(state.omega, state.tau);
     const phi = phase(state.omega, state.tau);
@@ -101,7 +89,6 @@
     return { M, phi, cutoff, error };
   }
 
-  // 4. Two steady-state sine waves, using four complete input cycles.
   function drawSine(M, phi) {
     const period = 2 * Math.PI / state.omega;
     const end = 4 * period;
@@ -127,8 +114,8 @@
       font: { family: 'system-ui, sans-serif', size: 12, color: '#374151' },
       margin: { l: 50, r: 15, t: 44, b: 48 },
       legend: { orientation: 'h', x: 0, y: 1.18 },
-      xaxis: { title: 'Time (s)', range: [0, end], gridcolor: '#e5e7eb', zeroline: false, fixedrange: true },
-      yaxis: { title: 'Amplitude', range: [-1.18, 1.18], gridcolor: '#e5e7eb', zeroline: false, fixedrange: true },
+      xaxis: { title: { text: 'Time (s)' }, range: [0, end], gridcolor: '#e5e7eb', zeroline: false, fixedrange: true },
+      yaxis: { title: { text: 'Amplitude' }, range: [-1.18, 1.18], gridcolor: '#e5e7eb', zeroline: false, fixedrange: true },
       shapes: [
         { type: 'line', x0: inputPeak, x1: inputPeak, y0: -1, y1: 1, line: { color: '#a1a1aa', width: 1, dash: 'dot' } },
         { type: 'line', x0: outputPeak, x1: outputPeak, y0: -1, y1: 1, line: { color: '#0f766e', width: 1, dash: 'dot' } }
@@ -137,7 +124,6 @@
     $('frequencyNote').textContent = `At ${sig(state.omega, 4)} rad/s (${sig(state.omega / (2 * Math.PI), 4)} Hz), the output amplitude is ${sig(M, 4)} of the input with ${sig(-phi * RAD_TO_DEG, 4)}° lag (${sig(outputPeak - inputPeak, 4)} s).`;
   }
 
-  // 5. Bode magnitude in dB and phase in degrees, with cutoff at 1/tau.
   function drawBode(cutoff) {
     const low = Math.min(cutoff, state.omega) / 18;
     const high = Math.max(cutoff, state.omega) * 18;
@@ -163,10 +149,11 @@
       frequencyLabels.push(value >= 0.01 && value <= 10000 ? sig(value, 5) : value.toExponential(0));
     }
     const frequencyAxis = { tickmode: 'array', tickvals: frequencyTicks, ticktext: frequencyLabels };
+    const cutoffDb = 20 * Math.log10(1 / Math.SQRT2);
     const traces = [
       { x, y: magDb, name: 'Magnitude', mode: 'lines', line: { color: '#0f766e', width: 2.5 }, xaxis: 'x', yaxis: 'y', hovertemplate: 'ω = %{x:.3g} rad/s<br>%{y:.2f} dB<extra></extra>' },
       { x, y: phaseDeg, name: 'Phase', mode: 'lines', line: { color: '#3f5d87', width: 2.5 }, xaxis: 'x2', yaxis: 'y2', hovertemplate: 'ω = %{x:.3g} rad/s<br>%{y:.1f}°<extra></extra>' },
-      { x: [cutoff], y: [-3.01029995664], name: 'Cutoff', mode: 'markers', marker: { color: '#ae3e35', size: 8 }, showlegend: false, xaxis: 'x', yaxis: 'y', hovertemplate: 'Cutoff: %{x:.3g} rad/s<extra></extra>' },
+      { x: [cutoff], y: [cutoffDb], name: 'Cutoff', mode: 'markers', marker: { color: '#ae3e35', size: 8 }, showlegend: false, xaxis: 'x', yaxis: 'y', hovertemplate: 'Cutoff: %{x:.3g} rad/s<extra></extra>' },
       { x: [state.omega], y: [20 * Math.log10(magnitude(state.omega, state.tau))], name: 'Selected frequency', mode: 'markers', marker: { color: '#9b692c', size: 10, line: { color: '#fff', width: 1 } }, showlegend: false, xaxis: 'x', yaxis: 'y', hovertemplate: 'Input ω = %{x:.3g} rad/s<br>%{y:.2f} dB<extra></extra>' },
       { x: [state.omega], y: [phase(state.omega, state.tau) * RAD_TO_DEG], name: 'Selected phase', mode: 'markers', marker: { color: '#9b692c', size: 10, line: { color: '#fff', width: 1 } }, showlegend: false, xaxis: 'x2', yaxis: 'y2', hovertemplate: 'Input ω = %{x:.3g} rad/s<br>%{y:.1f}°<extra></extra>' }
     ];
@@ -176,12 +163,12 @@
       showlegend: false,
       margin: { l: 62, r: 20, t: 39, b: 54 },
       xaxis: { ...axis, ...frequencyAxis, type: 'log', range: [logLow, logHigh], domain: [0, 1], anchor: 'y', showticklabels: false },
-      xaxis2: { ...axis, ...frequencyAxis, type: 'log', range: [logLow, logHigh], domain: [0, 1], anchor: 'y2', title: 'Angular frequency ω (rad/s)' },
-      yaxis: { ...axis, domain: [0.58, 1], title: 'Gain (dB)', rangemode: 'tozero' },
-      yaxis2: { ...axis, domain: [0, 0.39], title: 'Phase (°)', range: [-95, 5] },
+      xaxis2: { ...axis, ...frequencyAxis, type: 'log', range: [logLow, logHigh], domain: [0, 1], anchor: 'y2', title: { text: 'Angular frequency ω (rad/s)' } },
+      yaxis: { ...axis, domain: [0.58, 1], title: { text: 'Gain (dB)' }, rangemode: 'tozero' },
+      yaxis2: { ...axis, domain: [0, 0.39], title: { text: 'Phase (°)' }, range: [-95, 5] },
       shapes: [
         { type: 'line', xref: 'x', yref: 'paper', x0: cutoff, x1: cutoff, y0: 0, y1: 1, line: { color: '#ae3e35', dash: 'dot', width: 1.5 } },
-        { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: -3.01029995664, y1: -3.01029995664, line: { color: '#b1b6b2', dash: 'dot', width: 1 } }
+        { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: cutoffDb, y1: cutoffDb, line: { color: '#b1b6b2', dash: 'dot', width: 1 } }
       ],
       annotations: [
         { xref: 'x', yref: 'paper', x: cutoff, y: 1.06, text: 'ωc', showarrow: false, font: { color: '#ae3e35', size: 12 } }
@@ -191,17 +178,12 @@
   }
 
   function renderFrequency() {
-    if (typeof Plotly === 'undefined') {
-      $('frequencyPlot').textContent = 'Plotly could not load. Confirm plotly.min.js is beside index.html.';
-      $('bodePlot').textContent = 'The plotting library is unavailable.';
-      return;
-    }
+    if (typeof Plotly === 'undefined') return;
     const { M, phi, cutoff } = updateMetrics();
     drawSine(M, phi);
     drawBode(cutoff);
   }
 
-  // 6. Calculator for an allowable dynamic-error percentage at a chosen f.
   function updateDesignCalculator() {
     const hz = validInput('designHz', 0.01, 100000);
     const error = validInput('designError', 0.01, 99);
@@ -227,7 +209,6 @@
     ).join('');
   }
 
-  // 7. Independent slide-number benchmarks: checks 2 and 3.
   function frequencyBenchmarks() {
     const lectureM = magnitude(2, 0.2);
     const lectureLag = -phase(2, 0.2) * RAD_TO_DEG;
@@ -258,7 +239,6 @@
     $('freqCheckSummary').className = passed === 4 ? 'mono bold pass' : 'mono bold fail';
   }
 
-  // 8. Predictions, presets, and exact-value input handling.
   function checkAnswer() {
     const answer = $('freqAnswer').value;
     const feedback = $('freqFeedback');
@@ -273,13 +253,15 @@
       feedback.className = 'feedback wrong';
     }
   }
+
   function attachSlider(id, field) {
     $(id).addEventListener('input', () => {
       state[field] = 10 ** Number($(id).value);
       syncControls();
-      queueRender();
+      if (currentModule === 'module-2') renderFrequency();
     });
   }
+
   function attachNumber(id, field, minimum, maximum) {
     $(id).addEventListener('input', () => {
       const value = validInput(id, minimum, maximum);
@@ -293,7 +275,7 @@
       $(field === 'tau' ? 'freqTauReadout' : 'freqOmegaReadout').textContent = field === 'tau' ? tauLabel(value) : `${sig(value)} rad/s`;
       $(field === 'tau' ? 'freqTauSlider' : 'freqOmegaSlider').setAttribute('aria-valuetext',
         field === 'tau' ? tauLabel(value) : `${sig(value)} rad/s`);
-      queueRender();
+      if (currentModule === 'module-2') renderFrequency();
     });
     $(id).addEventListener('blur', () => {
       $(id).value = sig(state[field], 8);
@@ -301,27 +283,47 @@
     });
   }
 
-  // 9. Validation suite for Modules 1, 2, and 3.
   function updateValidationSuite() {
-    const checks = window.Module1?.validationRows() || [
-      ['1 / Step at τ', '63.2% of KA', 'Unavailable', 'FAIL'],
-      ['1 / Step at 3τ', '95.0% of KA', 'Unavailable', 'FAIL']
+    const checks = [
+      ...(window.Module1?.validationRows() || [
+        ['1 / Step at τ', '63.2% of KA', 'Module 1 unavailable', 'FAIL'],
+        ['1 / Step at 3τ', '95.0% of KA', 'Module 1 unavailable', 'FAIL']
+      ]),
+      ...frequencyValidationRows(),
+      ...(window.Module3?.validationRows() || [
+        ['4 / ζ = 0.5 overshoot', '16.3%', 'Module 3 unavailable', 'FAIL'],
+        ['5 / ζ = 1 overshoot', '0%', 'Module 3 unavailable', 'FAIL'],
+        ['6 / m=1, b=2, k=4', 'ζ = 0.5, ωₙ = 2', 'Module 3 unavailable', 'FAIL'],
+        ['6 / Poles = A eigenvalues', '−1 ± j1.732', 'Module 3 unavailable', 'FAIL']
+      ])
     ];
-    checks.push(...frequencyValidationRows());
-    checks.push(...(window.Module3?.validationRows() || [
-      ['4–6 / Second-order and state space', '4 comparisons', 'Unavailable', 'FAIL']
-    ]));
     $('suiteRows').innerHTML = checks.map(([label, expected, actual, result]) =>
       `<tr><td>${label}</td><td class="mono">${expected}</td>` +
-      `<td class="mono">${actual}</td><td class="mono bold ${result === 'PASS' ? 'pass' : 'fail'}">${result}</td></tr>`
+      `<td class="mono">${actual}</td><td><span class="validation-result ${result === 'PASS' ? 'pass' : 'fail'}">${result}</span></td></tr>`
     ).join('');
     const passed = checks.filter(item => item[3] === 'PASS').length;
-    $('suiteSummary').textContent = `${passed} / 10 PASS`;
+    $('suiteSummary').textContent = `${passed} / ${checks.length} PASS`;
+    const passedGroups = [1, 2, 3, 4, 5, 6].filter(n => {
+      const rows = checks.filter(c => c[0].startsWith(n + ' /'));
+      return rows.length > 0 && rows.every(c => c[3] === 'PASS');
+    }).length;
+    $('suiteCheckCount').textContent = `${passedGroups} / 6 numbered checks passed`;
     $('suiteSummary').classList.toggle('fail', passed !== 10 || checks.length !== 10);
     $('suiteSummary').classList.toggle('pass', passed === 10 && checks.length === 10);
   }
 
-  // 10. Hash navigation, desktop collapse, and an accessible mobile drawer.
+  function resizeVisiblePlots() {
+    if (typeof Plotly === 'undefined') return;
+    const ids = currentModule === 'module-1' ? ['timePlot', 'logPlot'] :
+      currentModule === 'module-2' ? ['frequencyPlot', 'bodePlot'] :
+      currentModule === 'module-3' ? ['thirdResponsePlot', 'thirdPolePlot', 'thirdPhasePlot'] :
+      currentModule === 'module-4' ? ['challengePlot'] : [];
+    for (const id of ids) {
+      const plot = $(id);
+      if (plot && plot.data && plot.clientWidth > 0) Plotly.Plots.resize(plot);
+    }
+  }
+
   const sidebar = $('siteSidebar');
   const appMain = document.querySelector('.app-main');
   const mobileQuery = window.matchMedia('(max-width: 900px)');
@@ -352,15 +354,9 @@
     closeMobileMenu();
     if (currentModule === 'module-2') renderFrequency();
     if (currentModule === 'module-3' && window.Module3) window.Module3.render();
+    if (currentModule === 'module-4' && window.Module4) window.Module4.render();
     if (currentModule === 'validation') updateValidationSuite();
-    if (currentModule === 'module-1' && typeof Plotly !== 'undefined') {
-      requestAnimationFrame(() => {
-        for (const id of ['timePlot', 'logPlot']) {
-          const plot = $(id);
-          if (plot && plot.data) Plotly.Plots.resize(plot);
-        }
-      });
-    }
+    requestAnimationFrame(resizeVisiblePlots);
     if (wasMobileOpen) requestAnimationFrame(() => {
       const heading = document.querySelector(`#${currentModule} h1`);
       if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
@@ -411,20 +407,13 @@
     })
   );
 
-  // 11. Redraw visible plots when the sidebar changes available width.
   if (typeof ResizeObserver !== 'undefined') {
     let resizeFrame = 0;
     new ResizeObserver(() => {
       cancelAnimationFrame(resizeFrame);
       resizeFrame = requestAnimationFrame(() => {
         if (typeof Plotly === 'undefined') return;
-        const ids = currentModule === 'module-1' ? ['timePlot', 'logPlot'] :
-          currentModule === 'module-2' ? ['frequencyPlot', 'bodePlot'] :
-          currentModule === 'module-3' ? ['thirdResponsePlot', 'thirdPolePlot', 'thirdPhasePlot'] : [];
-        for (const id of ids) {
-          const plot = $(id);
-          if (plot && plot.data && plot.clientWidth > 0) Plotly.Plots.resize(plot);
-        }
+        resizeVisiblePlots();
       });
     }).observe(appMain);
   }
@@ -436,6 +425,7 @@
   $('lectureSineBtn').addEventListener('click', () => setState(0.2, 2));
   $('highFrequencyBtn').addEventListener('click', () => setState(maxTau(100, 5), 2 * Math.PI * 100));
   $('freqCheckBtn').addEventListener('click', checkAnswer);
+  $('suiteRun').addEventListener('click', updateValidationSuite);
   for (const id of ['designHz', 'designError', 'phaseHz']) {
     $(id).addEventListener('input', updateDesignCalculator);
   }
@@ -443,7 +433,5 @@
   syncControls();
   updateDesignCalculator();
   runFrequencyValidation();
-  // defer scripts finish before DOMContentLoaded, including module3.js.
-  // This also renders Module 3 when the page opens directly at #module-3.
   document.addEventListener('DOMContentLoaded', activateModule, { once: true });
 })();

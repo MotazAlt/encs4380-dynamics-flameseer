@@ -1,5 +1,4 @@
-// 1. Simulation Constants & State
-const TIME_END = 80;
+// Module 1: First-Order Sensor Time Response
 const POINTS = 300;
 
 let initialReading = 20;
@@ -11,7 +10,6 @@ function getEl(id) {
   return document.getElementById(id);
 }
 
-// 2. First-Order Sensor Equations
 // Step response change: y(t) - y(0) = K * A * (1 - e^(-t / tau))
 function stepResponse(t, K, A, tau) {
   return K * A * (1 - Math.exp(-t / tau));
@@ -22,12 +20,6 @@ function rampResponse(t, K, R, tau) {
   return K * R * (t - tau + tau * Math.exp(-t / tau));
 }
 
-// Log error fraction: ln(error) = -t / tau
-function logError(t, tau) {
-  return -t / tau;
-}
-
-// 3. Read Current Slider Controls
 function getParams() {
   return {
     mode: document.querySelector('#module-1 input[name="mode"]:checked').value,
@@ -37,7 +29,6 @@ function getParams() {
   };
 }
 
-// 4. Update Text Readouts & Measurements
 function updateReadouts(p) {
   const isStep = p.mode === 'step';
 
@@ -67,7 +58,6 @@ function updateReadouts(p) {
   `).join('');
 }
 
-// 5. Shared Plotly Layout (Pure White Background)
 const baseLayout = {
   paper_bgcolor: '#ffffff',
   plot_bgcolor: '#ffffff',
@@ -83,15 +73,15 @@ const axisStyle = {
   fixedrange: true
 };
 
-// 6. Draw Time Response Plot
 function drawTimePlot(p) {
   const isStep = p.mode === 'step';
+  const timeEnd = 8 * p.tau;
   const t = [];
   const ideal = [];
   const sensor = [];
 
   for (let i = 0; i <= POINTS; i++) {
-    const time = (i * TIME_END) / POINTS;
+    const time = (i * timeEnd) / POINTS;
     t.push(time);
 
     if (isStep) {
@@ -120,7 +110,7 @@ function drawTimePlot(p) {
     traces.push({
       x: [t1, t3],
       y: [y1, y3],
-      text: p.tau < 3 ? ['', ''] : ['63.2% (τ)', '95.0% (3τ)'],
+      text: ['63.2% (τ)', '95.0% (3τ)'],
       mode: 'markers+text',
       textposition: ['top right', 'bottom left'],
       hovertext: ['τ: 63.2% of the final change', '3τ: 95.0% of the final change'],
@@ -139,7 +129,6 @@ function drawTimePlot(p) {
     getEl('timeNote').textContent = `At t = τ (${t1.toFixed(1)} s), reading = ${y1.toFixed(2)}. At t = 3τ (${t3.toFixed(1)} s), reading = ${y3.toFixed(2)}.`;
   } else {
     const slope = p.K * p.input;
-    // The steady-state line is an asymptote, not the finite-time sensor value.
     traces.push({
       x: t,
       y: t.map(time => time < p.tau ? null : initialReading + slope * (time - p.tau)),
@@ -147,14 +136,12 @@ function drawTimePlot(p) {
       mode: 'lines',
       line: { color: '#926c46', width: 1.8, dash: 'dot' }
     });
-    const tRef = 65;
+    const tRef = 0.8 * timeEnd;
     const yLow = initialReading + slope * (tRef - p.tau);
     const yHigh = initialReading + slope * tRef;
 
     shapes = [
-      // Vertical line showing steady-state error KR*tau
       { type: 'line', x0: tRef, y0: yLow, x1: tRef, y1: yHigh, line: { color: '#b91c1c', width: 2 } },
-      // Horizontal line showing ramp time lag tau
       { type: 'line', x0: tRef - p.tau, y0: yLow, x1: tRef, y1: yLow, line: { color: '#111827', width: 2 } }
     ];
 
@@ -163,7 +150,7 @@ function drawTimePlot(p) {
       { x: tRef - p.tau / 2, y: yLow, text: 'Lag = τ', showarrow: false, yshift: 12, font: { color: '#111827' } }
     ];
 
-    getEl('timeNote').textContent = `The dotted line is the steady-state asymptote: time lag τ = ${p.tau.toFixed(1)} s, limiting error KRτ = ${(slope * p.tau).toFixed(2)}. The actual sensor approaches this line over time.`;
+    getEl('timeNote').textContent = `The dotted line is the steady-state asymptote: time lag τ = ${p.tau.toFixed(1)} s, limiting error KRτ = ${(slope * p.tau).toFixed(2)}.`;
   }
 
   const yMax = Math.max(ideal[ideal.length - 1] * 1.15, 2);
@@ -172,46 +159,42 @@ function drawTimePlot(p) {
     ...baseLayout,
     shapes,
     annotations,
-    xaxis: { ...axisStyle, title: 'Time (s)', range: [0, TIME_END] },
-    yaxis: { ...axisStyle, title: 'Reading', range: [0, yMax] }
+    xaxis: { ...axisStyle, title: { text: 'Time (s)' }, range: [0, timeEnd] },
+    yaxis: { ...axisStyle, title: { text: 'Reading' }, range: [0, yMax] }
   }, { responsive: true, displayModeBar: false });
+  return { t, ideal, sensor };
 }
 
-// 7. Draw Log Error-Fraction Plot
-function drawLogPlot(p) {
-  const t = [];
-  const logVals = [];
-
-  for (let i = 0; i <= POINTS; i++) {
-    const time = (i * TIME_END) / POINTS;
-    t.push(time);
-    logVals.push(logError(time, p.tau));
-  }
+function drawLogPlot(p, samples) {
+  const { t, ideal, sensor } = samples;
+  const timeEnd = t[t.length - 1];
+  const fractions = sensor.map((y, i) => p.mode === 'step'
+    ? (ideal[i] - y) / (p.K * p.input)
+    : 1 - (ideal[i] - y) / (p.K * p.input * p.tau));
 
   const trace = {
     x: t,
-    y: logVals,
+    y: fractions,
+    customdata: fractions.map(Math.log),
+    hovertemplate: 't = %{x:.3g} s<br>Error fraction = %{y:.4g}<br>ln(fraction) = %{customdata:.4f}<extra></extra>',
     mode: 'lines',
     line: { color: '#0f766e', width: 3 }
   };
 
-  // Show the full log-error line for the selected time constant
   Plotly.react('logPlot', [trace], {
     ...baseLayout,
     showlegend: false,
-    xaxis: { ...axisStyle, title: 'Time (s)', range: [0, TIME_END] },
-    yaxis: { ...axisStyle, title: 'ln(error fraction)', range: [-Math.max(5, TIME_END / p.tau), 0] }
+    xaxis: { ...axisStyle, title: { text: 'Time (s)' }, range: [0, timeEnd] },
+    yaxis: { ...axisStyle, type: 'log', title: { text: 'Error fraction (log scale)' } }
   }, { responsive: true, displayModeBar: false });
 
-  const slope = (-1 / p.tau).toFixed(4);
-  getEl('slopeVal').textContent = `Slope = -1/τ = ${slope} s⁻¹`;
+  const slope = ((Math.log(fractions[fractions.length - 1]) - Math.log(fractions[0])) / timeEnd).toFixed(4);
+  getEl('slopeVal').textContent = `ln-slope = -1/τ = ${slope} s⁻¹`;
   getEl('logNote').textContent = p.mode === 'step'
-    ? 'For a step, ln[(y∞ − y(t)) / (KA)] = −t/τ. The straight-line slope is −1/τ.'
-    : 'For a ramp, ln[1 − (ideal − y) / (KRτ)] = −t/τ. The straight-line slope is −1/τ.';
+    ? 'Step error fraction (y∞ − y(t)) / (KA) on a log axis. The slope of ln(error fraction) is −1/τ.'
+    : 'Ramp transient error fraction 1 − (ideal − y) / (KRτ) on a log axis. The slope of ln(error fraction) is −1/τ.';
 }
 
-// 8. Validate the step response, even while the Ramp view is selected.
-// Benchmarks refer to the last step amplitude; the ramp slope is separate.
 function stepBenchmarks(p) {
   const A = p.mode === 'step' ? p.input : savedStepA;
   const KA = p.K * A;
@@ -247,7 +230,6 @@ function validationRows() {
   return stepBenchmarks(getParams()).map(c => [c.label, c.expected, c.computed, c.result]);
 }
 
-// 9. Predict, Then Check Logic
 const questions = {
   step: {
     prompt: 'Before moving the τ slider: If you double τ, what happens to the 63.2% response time and the log-error slope?',
@@ -301,15 +283,14 @@ function checkPrediction() {
   }
 }
 
-// 10. Mode Switching, Presets & Event Listeners
 function updateAll() {
   const p = getParams();
   if (p.mode === 'step') savedStepA = p.input;
   else savedRampR = p.input;
 
   updateReadouts(p);
-  drawTimePlot(p);
-  drawLogPlot(p);
+  const samples = drawTimePlot(p);
+  drawLogPlot(p, samples);
   runValidation(p);
 }
 

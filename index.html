@@ -4,13 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#ffffff">
-  <meta name="description" content="ENCS4380 interactive first- and second-order sensor dynamic response toolkit.">
+  <meta name="description" content="ENCS4380 interactive sensor dynamics laboratory with first-order and second-order models, a parameter-guessing challenge, and lecture validation.">
   <title>ENCS4380 | Dynamic Characteristics Toolkit</title>
   <link rel="stylesheet" href="styles.css">
   <script defer src="plotly.min.js"></script>
   <script defer src="app.js"></script>
   <script defer src="module2.js"></script>
   <script defer src="module3.js"></script>
+  <script defer src="module4.js"></script>
 </head>
 <body>
   <div id="navBackdrop" class="nav-backdrop" hidden></div>
@@ -36,14 +37,17 @@
           <a href="#module-3" class="module-nav-link" data-module="module-3" aria-label="Module 3: Second-order response" title="Module 3: Second-order response">
             <span class="module-number">03</span><span class="module-link-copy"><strong>Second-order</strong><small>Step · State space</small></span><span class="active-dot" aria-hidden="true"></span>
           </a>
-          <a href="#module-4" class="module-nav-link" data-module="module-4" aria-label="Module 4: Guess the sensor challenge, planned" title="Module 4: Guess the sensor">
-            <span class="module-number">04</span><span class="module-link-copy"><strong>Guess the sensor</strong><small>Planned</small></span><span class="active-dot" aria-hidden="true"></span>
+          <a href="#module-4" class="module-nav-link" data-module="module-4" aria-label="Module 4: Guess the sensor challenge" title="Module 4: Guess the sensor">
+            <span class="module-number">04</span><span class="module-link-copy"><strong>Guess the sensor</strong><small>Challenge · Scoring</small></span><span class="active-dot" aria-hidden="true"></span>
           </a>
         </nav>
         <div class="sidebar-separator" role="presentation"></div>
-        <nav class="module-navigation" aria-label="Validation">
+        <nav class="module-navigation" aria-label="Project information">
           <a href="#validation" class="module-nav-link" data-module="validation" aria-label="Validation checks suite" title="Validation checks suite">
             <span class="module-number">V</span><span class="module-link-copy"><strong>Validation suite</strong><small>Checks 1–6</small></span><span class="active-dot" aria-hidden="true"></span>
+          </a>
+          <a href="#about" class="module-nav-link" data-module="about" aria-label="About the project and Team 10" title="About the project and team">
+            <span class="module-number">i</span><span class="module-link-copy"><strong>About &amp; team</strong><small>Project · Contributors</small></span><span class="active-dot" aria-hidden="true"></span>
           </a>
         </nav>
       </div>
@@ -128,7 +132,7 @@
       </section>
       <section class="card plot-card">
         <div class="card-header"><h2>Log Error-Fraction</h2><span id="slopeVal" class="mono bold"></span></div>
-        <div id="logPlot" class="plot-box" role="img" aria-label="Natural logarithm of the error fraction versus time"></div>
+        <div id="logPlot" class="plot-box" role="img" aria-label="Sampled error fraction versus time on a logarithmic y-axis"></div>
         <p id="logNote" class="muted"></p>
       </section>
     </div>
@@ -314,11 +318,7 @@
             <div class="controls-top">
               <div>
                 <h2 id="thirdParamsTitle">System Parameters</h2>
-                <p class="muted">Both input methods update the same physical model, so transfer function and state space always agree.</p>
-              </div>
-              <div class="mode-group third-mode" role="group" aria-label="Choose parameter input type">
-                <label><input id="thirdModelChoice" type="radio" name="thirdSource" value="model" checked> ζ and ωₙ</label>
-                <label><input id="thirdPhysicalChoice" type="radio" name="thirdSource" value="physical"> Physical m, b, k</label>
+                <p class="muted">Move any slider to update the model—response parameters (ζ, ωₙ) and physical parameters (m, b, k) stay linked automatically.</p>
               </div>
               <div class="preset-group third-presets">
                 <button class="btn-outline" type="button" id="thirdUnderPreset">Underdamped</button>
@@ -342,20 +342,20 @@
                   </div>
                 </div>
               </div>
-              <div id="thirdPhysicalInputs" class="third-input-group controls-disabled">
+              <div id="thirdPhysicalInputs" class="third-input-group">
                 <h3>Physical mass-spring-damper</h3>
                 <div class="third-slider-row physical">
                   <div class="slider-item">
                     <div class="slider-header"><label for="thirdMass">Mass (m)</label><output id="thirdMassOut" class="mono">1 kg</output></div>
-                    <input id="thirdMass" type="range" min="0.5" max="10" step="0.1" value="1" disabled>
+                    <input id="thirdMass" type="range" min="0.5" max="10" step="0.1" value="1">
                   </div>
                   <div class="slider-item">
                     <div class="slider-header"><label for="thirdDamper">Damping (b)</label><output id="thirdDamperOut" class="mono">2 N·s/m</output></div>
-                    <input id="thirdDamper" type="range" min="0" max="150" step="0.1" value="2" disabled>
+                    <input id="thirdDamper" type="range" min="0" max="150" step="0.1" value="2">
                   </div>
                   <div class="slider-item">
                     <div class="slider-header"><label for="thirdSpring">Stiffness (k)</label><output id="thirdSpringOut" class="mono">4 N/m</output></div>
-                    <input id="thirdSpring" type="range" min="0.1" max="1000" step="0.1" value="4" disabled>
+                    <input id="thirdSpring" type="range" min="0.1" max="1000" step="0.1" value="4">
                   </div>
                 </div>
               </div>
@@ -383,8 +383,8 @@
             <div class="card-header"><h2 id="thirdStateTitle">State-Space Model</h2><span class="small-label">x₁ = DISPLACEMENT · x₂ = VELOCITY</span></div>
             <p class="muted">ẋ = Ax + BF(t), &nbsp; y = [1, 0]x. For a target displacement K, apply a force step F₀ = kK N; the physical system then has the same output as the transfer-function model.</p>
             <div class="third-matrices">
-              <div><span class="matrix-label">A · state matrix</span><pre id="thirdMatrixA" class="matrix mono"></pre></div>
-              <div><span class="matrix-label">B · input matrix</span><pre id="thirdMatrixB" class="matrix mono"></pre></div>
+              <div><span class="matrix-label">A · state matrix</span><div id="thirdMatrixA" class="matrix matrix-a mono" role="img" aria-label="State matrix A, two rows and two columns"><span class="matrix-value">0</span><span class="matrix-value">1</span><span class="matrix-value">−4</span><span class="matrix-value">−2</span></div></div>
+              <div><span class="matrix-label">B · input matrix</span><div id="thirdMatrixB" class="matrix matrix-b mono" role="img" aria-label="Input matrix B, two rows and one column"><span class="matrix-value">0</span><span class="matrix-value">1</span></div></div>
               <div class="third-state-force"><span class="matrix-label">Force step</span><p id="thirdForce" class="mono"></p><span class="matrix-label">C = [1, 0] · D = 0</span></div>
             </div>
           </section>
@@ -413,27 +413,89 @@
         </section>
 
         <section id="module-4" class="module-view" aria-label="Module 4: Guess the Sensor Challenge" hidden>
-          <p class="eyebrow">04 / Parameter estimation</p>
-          <section class="title-section"><div>
-            <h1>Guess the Sensor Challenge</h1>
-            <p class="subtitle">This module is reserved for the parameter-estimation challenge. No sensor round is running yet.</p>
-          </div></section>
-          <section class="card planned-panel" aria-labelledby="plannedFourTitle">
-            <span class="planned-number mono" aria-hidden="true">04</span>
+          <p class="eyebrow">04 / Parameter estimation · challenge</p>
+          <section class="title-section">
             <div>
-              <p class="planned-status">PLANNED MODULE</p>
-              <h2 id="plannedFourTitle">What this view will contain</h2>
-              <p class="muted">A randomly selected hidden sensor with a noisy response; parameter guesses for τ or ζ and ωₙ; comparison against the true curve, hints, and session scoring.</p>
-              <p class="planned-note">The interactive challenge will be added after the second-order simulator.</p>
+              <h1>Guess the Sensor</h1>
+              <p class="subtitle">Read a noisy response, estimate the hidden parameters, then reveal the true system. One guess per round.</p>
+            </div>
+            <div class="equations challenge-equation">
+              <p>Observe → Estimate → Verify</p>
+              <p class="muted">Within 10% on every parameter = full marks</p>
             </div>
           </section>
+
+          <section class="card challenge-toolbar" aria-labelledby="challengeRoundTitle">
+            <div>
+              <p class="challenge-kicker">CURRENT EXPERIMENT</p>
+              <h2 id="challengeRoundTitle">Loading sensor…</h2>
+              <p id="challengeDescription" class="muted"></p>
+            </div>
+            <div class="challenge-toolbar-actions">
+              <div class="challenge-session" aria-live="polite">
+                <span>SESSION SCORE</span>
+                <strong id="challengeSessionScore" class="mono">0 / 0</strong>
+                <small id="challengeSessionRounds">0 rounds checked</small>
+              </div>
+              <button id="challengeNew" type="button">New Sensor</button>
+            </div>
+          </section>
+
+          <section class="card plot-card challenge-plot-card" aria-labelledby="challengePlotTitle">
+            <div class="card-header">
+              <h2 id="challengePlotTitle">Measured Response</h2>
+              <span id="challengePlotStatus" class="small-label">NOISY MEASUREMENT</span>
+            </div>
+            <div id="challengePlot" class="plot-box" role="img" aria-label="Noisy response of an unknown sensor; true and estimated responses appear after checking a guess"></div>
+            <p id="challengePlotNote" class="muted"></p>
+          </section>
+
+          <section class="card challenge-guess-panel" aria-labelledby="challengeGuessTitle">
+            <div class="card-header"><h2 id="challengeGuessTitle">Your Parameter Estimate</h2><span id="challengeRoundNumber" class="small-label">ROUND 01</span></div>
+            <form id="challengeGuessForm" novalidate>
+              <div id="challengeFirstInputs" class="challenge-fields">
+                <div class="challenge-field">
+                  <label for="challengeTau">Time constant τ <span class="muted">(s)</span></label>
+                  <input id="challengeTau" type="number" inputmode="decimal" step="any" min="0.000001" max="1000" placeholder="e.g. 1.4" autocomplete="off">
+                </div>
+              </div>
+              <div id="challengeSecondInputs" class="challenge-fields" hidden>
+                <div class="challenge-field">
+                  <label for="challengeZeta">Damping ratio ζ</label>
+                  <input id="challengeZeta" type="number" inputmode="decimal" step="any" min="0" max="20" placeholder="e.g. 0.5" autocomplete="off">
+                </div>
+                <div class="challenge-field">
+                  <label for="challengeWn">Natural frequency ωₙ <span class="muted">(rad/s)</span></label>
+                  <input id="challengeWn" type="number" inputmode="decimal" step="any" min="0.000001" max="1000" placeholder="e.g. 3" autocomplete="off">
+                </div>
+              </div>
+              <div class="challenge-actions">
+                <button id="challengeCheck" type="submit">Check Guess</button>
+                <button id="challengeHintBtn" type="button" class="btn-outline">Hint</button>
+              </div>
+              <p id="challengeFeedback" class="feedback" role="status" aria-live="polite"></p>
+              <p id="challengeHint" class="challenge-hint" aria-live="polite"></p>
+            </form>
+            <div id="challengeReveal" class="challenge-reveal" hidden aria-live="polite">
+              <div>
+                <p class="challenge-kicker">TRUE SENSOR PARAMETERS</p>
+                <p id="challengeTruth" class="mono challenge-truth"></p>
+                <p id="challengeAccuracy" class="muted"></p>
+              </div>
+              <div class="challenge-points">
+                <strong id="challengePoints" class="mono"></strong>
+                <small>POINTS THIS ROUND</small>
+              </div>
+            </div>
+          </section>
+          <p class="challenge-footnote">The sensor parameters are hidden until you submit. Noise is added to the measurement only; your estimated response and the true curve appear afterward. First-order estimate curves use the revealed true K. The session score resets on page reload.</p>
         </section>
 
         <section id="validation" class="module-view" aria-label="Validation Checks Suite" hidden>
           <p class="eyebrow">V / Lecture benchmarks</p>
           <section class="title-section"><div>
             <h1>Validation Checks Suite</h1>
-            <p class="subtitle">Expected lecture results alongside the implementations in Modules 1, 2 and 3.</p>
+            <p class="subtitle">Automated lecture benchmarks for Modules 1–3, plus the separate live scoring challenge in Module 4.</p>
           </div></section>
           <section class="card validation-overview" aria-labelledby="validationSummaryTitle">
             <div>
@@ -441,7 +503,7 @@
               <h2 id="validationSummaryTitle">Current verification</h2>
               <p class="muted">The step check uses Module 1's current parameters. Frequency and second-order checks use the assignment's fixed reference cases.</p>
             </div>
-            <strong id="suiteSummary" class="suite-score mono" role="status">—</strong>
+            <div class="suite-status"><strong id="suiteSummary" class="suite-score mono" role="status">—</strong><span id="suiteCheckCount" class="small-label">—</span><button id="suiteRun" class="btn-outline" type="button">Run Checks</button></div>
           </section>
           <section class="card" aria-labelledby="suiteTableTitle">
             <div class="card-header"><h2 id="suiteTableTitle">Expected vs. Computed</h2><span class="small-label">10 BENCHMARK VALUES</span></div>
@@ -454,7 +516,58 @@
           </section>
           <section class="card next-checks">
             <h2>Six homework checks</h2>
-            <p class="muted">The six numbered homework checks contain ten numerical comparisons: two step, four frequency, and four second-order/state-space results.</p>
+            <p class="muted">The six numbered homework checks contain ten numerical comparisons: two step, four frequency, and four second-order/state-space results. These check the analytical model; Module 4 is assessed separately through interactive guess scoring.</p>
+          </section>
+        </section>
+        <section id="about" class="module-view" aria-label="About the project and Team 10" hidden>
+          <p class="eyebrow">About / Project &amp; contributors</p>
+          <section class="title-section">
+            <div>
+              <h1>Dynamic Characteristics Toolkit</h1>
+              <p class="subtitle">A Team 10 course project exploring how sensors respond to signals that change over time.</p>
+            </div>
+            <span class="formula-tag mono">ENCS4380 · Homework 1</span>
+          </section>
+
+          <section class="card" aria-labelledby="aboutProjectTitle">
+            <div class="card-header"><h2 id="aboutProjectTitle">Project overview</h2><span class="small-label">TEAM 10</span></div>
+            <p>Sensors take time to follow their inputs. This toolkit makes that delay visible through first-order and second-order models, interactive plots, and a sensor-identification challenge. Each module connects a response curve with the equations used to describe it.</p>
+            <dl class="about-details">
+              <div><dt>University</dt><dd>Birzeit University</dd></div>
+              <div><dt>Course</dt><dd>ENCS4380 — Interfacing Techniques</dd></div>
+              <div><dt>Instructor</dt><dd>Dr. Wasel Ghanem</dd></div>
+              <div><dt>Assignment</dt><dd>Homework 1 — Dynamic Characteristics Interactive Toolkit</dd></div>
+            </dl>
+          </section>
+
+          <section class="card" aria-labelledby="aboutTeamTitle">
+            <div class="card-header"><h2 id="aboutTeamTitle">Team members &amp; module ownership</h2></div>
+            <div class="table-wrap"><table>
+              <thead><tr><th scope="col">Team member</th><th scope="col">Module</th><th scope="col">Focus</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Motaz Tayseer</th><td>01 · Time response</td><td>First-order step and ramp responses, time constant, lag, and log-error plot</td></tr>
+                <tr><th scope="row">Karam Naji</th><td>02 · Frequency response</td><td>Sine response, Bode plots, cutoff frequency, and dynamic-error calculator</td></tr>
+                <tr><th scope="row">Nidal AbuHammad</th><td>03 · Second-order response</td><td>Damping, curve measurements, state-space matrices, poles, and phase plane</td></tr>
+                <tr><th scope="row">Ameer AbdelJabbar</th><td>04 · Guess the sensor</td><td>Hidden random sensors, noisy measurements, hints, reveal overlays, and scoring</td></tr>
+              </tbody>
+            </table></div>
+          </section>
+
+          <section class="card" aria-labelledby="aboutGuideTitle">
+            <h2 id="aboutGuideTitle">Using the toolkit</h2>
+            <ol class="about-steps">
+              <li>Make a prediction in a module's “Predict, then check” box.</li>
+              <li>Move the sliders and compare the plotted response with the live measurements.</li>
+              <li>Use the Validation Suite to compare the models with the six lecture checks.</li>
+              <li>Try “Guess the sensor” and estimate τ, or ζ and ωₙ, from a noisy curve. Estimates within 10% receive full marks.</li>
+            </ol>
+          </section>
+
+          <section class="card" aria-labelledby="aboutModelsTitle">
+            <h2 id="aboutModelsTitle">Models &amp; measurement conventions</h2>
+            <p class="about-paragraph">The plots use the closed-form first-order and mass-spring-damper responses. Module 3 links displacement x₁ and velocity x₂ to A = [[0, 1], [−k/m, −b/m]], B = [[0], [1/m]], C = [1, 0], and D = 0.</p>
+            <p class="about-paragraph">Mass m is in kg, damping b in N·s/m, stiffness k in N/m, and ωₙ in rad/s. A force step F₀ = kK N gives final displacement K metres. Rise time uses the first 10%–90% transition; settling time uses the last entry into the ±2% band. Peak time and overshoot are measured from curve samples. Peaks below 0.01% are not marked; an undamped system never settles.</p>
+            <p class="muted about-paragraph">Built with HTML, CSS, JavaScript, and a locally bundled Plotly library. Everything runs in the browser without a backend, account, or network connection. Challenge scores last until the page is reloaded.</p>
           </section>
         </section>
       </main>
