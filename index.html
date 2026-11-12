@@ -3,18 +3,56 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ENCS4380 - Module 1: First-Order Time Response</title>
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="ENCS4380 interactive first-order sensor time and frequency response toolkit.">
+  <title>ENCS4380 | Dynamic Characteristics Toolkit</title>
   <link rel="stylesheet" href="styles.css">
-  <script defer src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script defer src="plotly.min.js"></script>
   <script defer src="app.js"></script>
+  <script defer src="module2.js"></script>
 </head>
 <body>
-  <header class="page header-bar">
-    <span class="course-name">ENCS4380 Interfacing Techniques</span>
-    <span class="module-tag">Module 1: First-Order Sensor</span>
-  </header>
-  <main class="page">
+  <div id="navBackdrop" class="nav-backdrop" hidden></div>
+  <div class="app-shell">
+    <aside class="sidebar" id="siteSidebar" aria-label="Course module sidebar">
+      <div class="sidebar-top">
+        <a class="brand" href="#module-1" aria-label="ENCS4380, Module 1">
+          <span class="brand-mark">E<span class="brand-dot">.</span></span>
+          <span class="brand-copy"><strong>ENCS4380</strong><small>DYNAMIC CHARACTERISTICS</small></span>
+        </a>
+        <button id="sidebarCollapse" class="sidebar-collapse" type="button" aria-controls="siteSidebar" aria-label="Collapse sidebar" aria-expanded="true" title="Collapse sidebar">‹</button>
+      </div>
+      <div class="sidebar-inner">
+        <p class="sidebar-heading">THE TOOLKIT <span> / 2026</span></p>
+        <nav class="module-navigation" aria-label="Modules">
+          <a href="#module-1" class="module-nav-link is-active" data-module="module-1" aria-label="Module 1: First-order time response" title="Module 1: Time response" aria-current="page">
+            <span class="module-number">01</span><span class="module-link-copy"><strong>Time response</strong><small>Step · Ramp</small></span><span class="active-dot" aria-hidden="true"></span>
+          </a>
+          <a href="#module-2" class="module-nav-link" data-module="module-2" aria-label="Module 2: First-order frequency response" title="Module 2: Frequency response">
+            <span class="module-number">02</span><span class="module-link-copy"><strong>Frequency response</strong><small>Sine · Bode</small></span><span class="active-dot" aria-hidden="true"></span>
+          </a>
+        </nav>
+        <div class="sidebar-upcoming">
+          <p class="sidebar-heading">UP NEXT</p>
+          <div class="upcoming-item"><span>03</span><span>Second-order response</span></div>
+          <div class="upcoming-item"><span>04</span><span>Guess the sensor</span></div>
+        </div>
+      </div>
+      <div class="sidebar-footer"><span>TEAM 10</span><small>Birzeit University<br>Interfacing Techniques</small></div>
+    </aside>
+
+    <div class="app-main">
+      <header class="page header-bar">
+        <div class="header-left">
+          <button id="mobileMenuToggle" class="mobile-menu-toggle" type="button" aria-label="Open module navigation" aria-expanded="false" aria-controls="siteSidebar"><span aria-hidden="true">☰</span></button>
+          <span class="course-name">ENCS4380 <span class="header-course-detail">/ Interfacing Techniques</span></span>
+        </div>
+        <span id="currentModuleName" class="module-tag">01 / First-Order Time Response</span>
+      </header>
+      <main class="page main-content" id="mainContent">
+        <section id="module-1" class="module-view" aria-label="Module 1: Time Response">
     <!-- Title and Model Equations -->
+    <p class="eyebrow">01 / Time domain · first-order sensor</p>
     <section class="title-section">
       <div>
         <h1>First-Order Sensor Time Response</h1>
@@ -103,7 +141,137 @@
         </table>
       </div>
     </section>
-  </main>
+  
+        </section>
+        <section id="module-2" class="module-view" aria-label="Module 2: Frequency Response" hidden>
+    <p class="eyebrow">02 / Frequency domain · first-order sensor</p>
+    <section class="title-section">
+      <div>
+        <h1>First-Order Frequency Response</h1>
+        <p class="subtitle">See how a sensor attenuates and delays a sinusoidal input. Explore the Bode response and design a sensor for a specified dynamic-error limit.</p>
+      </div>
+      <div class="equations" aria-label="Frequency response equations">
+        <p>M = 1 / √(1 + (ωτ)²)</p>
+        <p>φ = −atan(ωτ)</p>
+        <p>ω<sub>c</sub> = 1 / τ</p>
+      </div>
+    </section>
+
+    <section class="card predict-box" aria-labelledby="freqPredictTitle">
+      <div class="predict-text">
+        <h2 id="freqPredictTitle">Predict, then check</h2>
+        <p id="freqQuestion">If input frequency increases while τ stays fixed, what happens to the output?</p>
+      </div>
+      <div class="predict-controls">
+        <select id="freqAnswer" aria-label="Select frequency response prediction">
+          <option value="">Choose your prediction</option>
+          <option value="0">Amplitude decreases and phase lag grows</option>
+          <option value="1">Amplitude increases and phase lag shrinks</option>
+          <option value="2">Both remain unchanged</option>
+        </select>
+        <button id="freqCheckBtn" type="button">Check Answer</button>
+      </div>
+      <p id="freqFeedback" class="feedback" aria-live="polite"></p>
+    </section>
+
+    <section class="card controls-box" aria-labelledby="freqControlsTitle">
+      <div class="controls-top">
+        <div>
+          <h2 id="freqControlsTitle">Sine-Wave Experiment</h2>
+          <p class="muted">Change τ and angular frequency ω. Sliders use a logarithmic scale; type an exact value if needed.</p>
+        </div>
+        <div class="preset-group">
+          <button class="btn-outline" id="lectureSineBtn" type="button">Lecture: sin(2t)</button>
+          <button class="btn-outline" id="highFrequencyBtn" type="button">100 Hz Example</button>
+        </div>
+      </div>
+      <div class="sliders-grid frequency-controls">
+        <div class="slider-item">
+          <div class="slider-header">
+            <label for="freqTauSlider">Time constant (τ)</label>
+            <output id="freqTauReadout" class="mono">0.200 s</output>
+          </div>
+          <input id="freqTauSlider" type="range" min="-4" max="0" step="0.01" value="-0.69897">
+          <div class="slider-bounds"><span>0.1 ms</span><span>1 s</span></div>
+          <label class="numeric-entry" for="freqTauNumber"><span>Exact τ</span><input id="freqTauNumber" type="number" min="0.0001" max="1" step="any" value="0.2" aria-describedby="freqTauError"><span>s</span></label>
+          <small id="freqTauError" class="field-error" aria-live="polite"></small>
+        </div>
+        <div class="slider-item">
+          <div class="slider-header">
+            <label for="freqOmegaSlider">Input frequency (ω)</label>
+            <output id="freqOmegaReadout" class="mono">2.00 rad/s</output>
+          </div>
+          <input id="freqOmegaSlider" type="range" min="-2" max="4" step="0.01" value="0.30103">
+          <div class="slider-bounds"><span>0.01 rad/s</span><span>10,000 rad/s</span></div>
+          <label class="numeric-entry" for="freqOmegaNumber"><span>Exact ω</span><input id="freqOmegaNumber" type="number" min="0.01" max="10000" step="any" value="2" aria-describedby="freqOmegaError"><span>rad/s</span></label>
+          <small id="freqOmegaError" class="field-error" aria-live="polite"></small>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="freqMetricsTitle">
+      <div class="card-header"><h2 id="freqMetricsTitle">Live Frequency Measurements</h2><span class="small-label">UNIT INPUT AMPLITUDE</span></div>
+      <div id="freqMetrics" class="metrics-grid frequency-metrics" aria-live="polite"></div>
+    </section>
+
+    <div class="plots-grid frequency-plots">
+      <section class="card plot-card">
+        <div class="card-header"><h2>Input vs. Sensor Output</h2><span class="small-label">STEADY-STATE SINES</span></div>
+        <div id="frequencyPlot" class="plot-box" role="img" aria-label="Input and attenuated delayed output sinusoidal waveforms"></div>
+        <p id="frequencyNote" class="muted"></p>
+      </section>
+      <section class="card plot-card">
+        <div class="card-header"><h2>Bode Response</h2><span class="small-label">MAGNITUDE + PHASE</span></div>
+        <div id="bodePlot" class="plot-box bode-box" role="img" aria-label="Bode magnitude and phase with cutoff frequency marked"></div>
+        <p id="bodeNote" class="muted"></p>
+      </section>
+    </div>
+
+    <section class="card design-panel" aria-labelledby="designTitle">
+      <div class="card-header">
+        <div>
+          <h2 id="designTitle">Dynamic-Error Calculator</h2>
+          <p class="muted">For a target frequency and maximum permitted attenuation, calculate the largest acceptable τ.</p>
+        </div>
+        <span class="formula-tag mono">δ = M − 1</span>
+      </div>
+      <div class="design-controls">
+        <label for="designHz">Highest input frequency <span class="input-unit">Hz</span>
+          <input id="designHz" type="number" min="0.01" max="100000" step="any" value="100">
+        </label>
+        <label for="designError">Allowed dynamic error <span class="input-unit">%</span>
+          <input id="designError" type="number" min="0.01" max="99" step="any" value="5">
+        </label>
+        <label for="phaseHz">Evaluate phase at <span class="input-unit">Hz</span>
+          <input id="phaseHz" type="number" min="0.01" max="100000" step="any" value="50">
+        </label>
+      </div>
+      <div id="designResults" class="metrics-grid design-results" aria-live="polite"></div>
+      <p class="muted design-footnote">A negative δ means the sensor output amplitude is smaller than the input amplitude.</p>
+    </section>
+
+    <section class="card" aria-labelledby="freqValidationTitle">
+      <div class="card-header">
+        <h2 id="freqValidationTitle">Validation Checks 2 &amp; 3</h2>
+        <span id="freqCheckSummary" class="mono bold pass"></span>
+      </div>
+      <p class="muted">Fixed lecture examples are checked independently of the live sliders.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Lecture benchmark</th><th>Expected</th><th>Calculated</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>2 / Amplitude, τ = 0.2 s, ω = 2 rad/s</td><td class="mono">0.93</td><td id="freqValAmp" class="mono"></td><td id="freqValAmpStatus" class="mono bold"></td></tr>
+            <tr><td>2 / Phase lag, τ = 0.2 s, ω = 2 rad/s</td><td class="mono">21.8°</td><td id="freqValPhase" class="mono"></td><td id="freqValPhaseStatus" class="mono bold"></td></tr>
+            <tr><td>3 / Maximum τ, 100 Hz, ≤ 5% error</td><td class="mono">≈ 0.52 ms</td><td id="freqValTau" class="mono"></td><td id="freqValTauStatus" class="mono bold"></td></tr>
+            <tr><td>3 / Phase lag at 50 Hz using τ<sub>max</sub></td><td class="mono">9.3°</td><td id="freqVal50" class="mono"></td><td id="freqVal50Status" class="mono bold"></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+        </section>
+      </main>
+    </div>
+  </div>
 </body>
 </html>
-
