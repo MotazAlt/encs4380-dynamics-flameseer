@@ -30,7 +30,7 @@ function logError(t, tau) {
 // 3. Read Current Slider Controls
 function getParams() {
   return {
-    mode: document.querySelector('input[name="mode"]:checked').value,
+    mode: document.querySelector('#module-1 input[name="mode"]:checked').value,
     tau: Number(getEl('tau').value),
     K: Number(getEl('gain').value),
     input: Number(getEl('amount').value)
@@ -120,9 +120,11 @@ function drawTimePlot(p) {
     traces.push({
       x: [t1, t3],
       y: [y1, y3],
-      text: ['63.2% (τ)', '95.0% (3τ)'],
+      text: p.tau < 3 ? ['', ''] : ['63.2% (τ)', '95.0% (3τ)'],
       mode: 'markers+text',
-      textposition: 'bottom right',
+      textposition: ['top right', 'bottom left'],
+      hovertext: ['τ: 63.2% of the final change', '3τ: 95.0% of the final change'],
+      hoverinfo: 'text+x+y',
       showlegend: false,
       marker: { size: 9, color: '#b91c1c' }
     });
@@ -137,6 +139,14 @@ function drawTimePlot(p) {
     getEl('timeNote').textContent = `At t = τ (${t1.toFixed(1)} s), reading = ${y1.toFixed(2)}. At t = 3τ (${t3.toFixed(1)} s), reading = ${y3.toFixed(2)}.`;
   } else {
     const slope = p.K * p.input;
+    // The steady-state line is an asymptote, not the finite-time sensor value.
+    traces.push({
+      x: t,
+      y: t.map(time => time < p.tau ? null : initialReading + slope * (time - p.tau)),
+      name: 'Steady-state asymptote',
+      mode: 'lines',
+      line: { color: '#926c46', width: 1.8, dash: 'dot' }
+    });
     const tRef = 65;
     const yLow = initialReading + slope * (tRef - p.tau);
     const yHigh = initialReading + slope * tRef;
@@ -149,11 +159,11 @@ function drawTimePlot(p) {
     ];
 
     annotations = [
-      { x: tRef, y: (yLow + yHigh) / 2, text: 'Error = KRτ', showarrow: false, xanchor: 'left', xshift: 6, font: { color: '#b91c1c' } },
+      { x: tRef, y: (yLow + yHigh) / 2, text: 'Asymptotic error = KRτ', showarrow: false, xanchor: 'left', xshift: 6, font: { color: '#b91c1c' } },
       { x: tRef - p.tau / 2, y: yLow, text: 'Lag = τ', showarrow: false, yshift: 12, font: { color: '#111827' } }
     ];
 
-    getEl('timeNote').textContent = `In steady state, the sensor lags behind the ramp by τ = ${p.tau.toFixed(1)} s with vertical error KRτ = ${(slope * p.tau).toFixed(2)}.`;
+    getEl('timeNote').textContent = `The dotted line is the steady-state asymptote: time lag τ = ${p.tau.toFixed(1)} s, limiting error KRτ = ${(slope * p.tau).toFixed(2)}. The actual sensor approaches this line over time.`;
   }
 
   const yMax = Math.max(ideal[ideal.length - 1] * 1.15, 2);
@@ -195,32 +205,46 @@ function drawLogPlot(p) {
 
   const slope = (-1 / p.tau).toFixed(4);
   getEl('slopeVal').textContent = `Slope = -1/τ = ${slope} s⁻¹`;
-  getEl('logNote').textContent = 'The slope of ln(error fraction) vs. time is -1/τ. A larger τ produces a flatter slope.';
+  getEl('logNote').textContent = p.mode === 'step'
+    ? 'For a step, ln[(y∞ − y(t)) / (KA)] = −t/τ. The straight-line slope is −1/τ.'
+    : 'For a ramp, ln[1 − (ideal − y) / (KRτ)] = −t/τ. The straight-line slope is −1/τ.';
 }
 
-// 8. Run Validation Check 1
+// 8. Validate the step response, even while the Ramp view is selected.
+// Benchmarks refer to the last step amplitude; the ramp slope is separate.
+function stepBenchmarks(p) {
+  const A = p.mode === 'step' ? p.input : savedStepA;
+  const KA = p.K * A;
+  return [
+    { row: 1, label: '1 / Step at τ', time: p.tau, expectedRatio: 0.6321 },
+    { row: 2, label: '1 / Step at 3τ', time: 3 * p.tau, expectedRatio: 0.9502 }
+  ].map(c => {
+    const actual = stepResponse(c.time, p.K, A, p.tau);
+    const ratio = actual / KA;
+    return {
+      ...c,
+      expected: `${(KA * c.expectedRatio).toFixed(2)} (${(c.expectedRatio * 100).toFixed(1)}%)`,
+      computed: `${actual.toFixed(2)} (${(ratio * 100).toFixed(1)}%)`,
+      result: Math.abs(ratio - c.expectedRatio) < 0.001 ? 'PASS' : 'FAIL'
+    };
+  });
+}
+
 function runValidation(p) {
-  const KA = p.K * savedStepA;
-  const checks = [
-    { row: 1, time: p.tau, expectedRatio: 0.6321 },
-    { row: 2, time: 3 * p.tau, expectedRatio: 0.9502 }
-  ];
-
-  let passCount = 0;
-
+  const checks = stepBenchmarks(p);
   for (const c of checks) {
-    const computedChange = stepResponse(c.time, p.K, savedStepA, p.tau);
-    const computedRatio = computedChange / KA;
-    const isPass = Math.abs(computedRatio - c.expectedRatio) < 0.001;
-    if (isPass) passCount++;
-
-    getEl('expected' + c.row).textContent = `${(c.expectedRatio * KA).toFixed(2)} (${(c.expectedRatio * 100).toFixed(1)}%)`;
-    getEl('computed' + c.row).textContent = `${computedChange.toFixed(2)} (${(computedRatio * 100).toFixed(1)}%)`;
-    getEl('result' + c.row).textContent = isPass ? 'PASS' : 'FAIL';
-    getEl('result' + c.row).className = isPass ? 'mono bold pass' : 'mono bold fail';
+    getEl('expected' + c.row).textContent = c.expected;
+    getEl('computed' + c.row).textContent = c.computed;
+    getEl('result' + c.row).textContent = c.result;
+    getEl('result' + c.row).className = c.result === 'PASS' ? 'mono bold pass' : 'mono bold fail';
   }
+  const passed = checks.filter(c => c.result === 'PASS').length;
+  getEl('checkSummary').textContent = `${passed} / 2 Checks Passed`;
+  getEl('checkSummary').className = passed === 2 ? 'mono bold pass' : 'mono bold fail';
+}
 
-  getEl('checkSummary').textContent = `${passCount} / 2 Checks Passed`;
+function validationRows() {
+  return stepBenchmarks(getParams()).map(c => [c.label, c.expected, c.computed, c.result]);
 }
 
 // 9. Predict, Then Check Logic
@@ -312,15 +336,15 @@ function applyPreset(isTea) {
 
   getEl('tau').value = isTea ? 10 : 5;
   getEl('gain').value = 1;
-  document.querySelector('input[name="mode"][value="step"]').checked = true;
+  document.querySelector('#module-1 input[name="mode"][value="step"]').checked = true;
   switchMode();
 }
 
-document.querySelectorAll('input[type="range"]').forEach(slider => {
+document.querySelectorAll('#module-1 input[type="range"]').forEach(slider => {
   slider.addEventListener('input', updateAll);
 });
 
-document.querySelectorAll('input[name="mode"]').forEach(radio => {
+document.querySelectorAll('#module-1 input[name="mode"]').forEach(radio => {
   radio.addEventListener('change', switchMode);
 });
 
@@ -330,3 +354,4 @@ getEl('unitBtn').addEventListener('click', () => applyPreset(false));
 
 loadQuestion();
 updateAll();
+window.Module1 = { updateAll, validationRows };

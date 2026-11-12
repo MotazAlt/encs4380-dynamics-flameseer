@@ -4,12 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#ffffff">
-  <meta name="description" content="ENCS4380 interactive first-order sensor time and frequency response toolkit.">
+  <meta name="description" content="ENCS4380 interactive first- and second-order sensor dynamic response toolkit.">
   <title>ENCS4380 | Dynamic Characteristics Toolkit</title>
   <link rel="stylesheet" href="styles.css">
   <script defer src="plotly.min.js"></script>
   <script defer src="app.js"></script>
   <script defer src="module2.js"></script>
+  <script defer src="module3.js"></script>
 </head>
 <body>
   <div id="navBackdrop" class="nav-backdrop" hidden></div>
@@ -20,23 +21,31 @@
           <span class="brand-mark">E<span class="brand-dot">.</span></span>
           <span class="brand-copy"><strong>ENCS4380</strong><small>DYNAMIC CHARACTERISTICS</small></span>
         </a>
+        <button id="mobileSidebarClose" class="mobile-sidebar-close" type="button" aria-label="Close navigation" title="Close navigation">×</button>
         <button id="sidebarCollapse" class="sidebar-collapse" type="button" aria-controls="siteSidebar" aria-label="Collapse sidebar" aria-expanded="true" title="Collapse sidebar">‹</button>
       </div>
       <div class="sidebar-inner">
         <p class="sidebar-heading">THE TOOLKIT <span> / 2026</span></p>
-        <nav class="module-navigation" aria-label="Modules">
+        <nav class="module-navigation" aria-label="Toolkit sections">
           <a href="#module-1" class="module-nav-link is-active" data-module="module-1" aria-label="Module 1: First-order time response" title="Module 1: Time response" aria-current="page">
             <span class="module-number">01</span><span class="module-link-copy"><strong>Time response</strong><small>Step · Ramp</small></span><span class="active-dot" aria-hidden="true"></span>
           </a>
           <a href="#module-2" class="module-nav-link" data-module="module-2" aria-label="Module 2: First-order frequency response" title="Module 2: Frequency response">
             <span class="module-number">02</span><span class="module-link-copy"><strong>Frequency response</strong><small>Sine · Bode</small></span><span class="active-dot" aria-hidden="true"></span>
           </a>
+          <a href="#module-3" class="module-nav-link" data-module="module-3" aria-label="Module 3: Second-order response" title="Module 3: Second-order response">
+            <span class="module-number">03</span><span class="module-link-copy"><strong>Second-order</strong><small>Step · State space</small></span><span class="active-dot" aria-hidden="true"></span>
+          </a>
+          <a href="#module-4" class="module-nav-link" data-module="module-4" aria-label="Module 4: Guess the sensor challenge, planned" title="Module 4: Guess the sensor">
+            <span class="module-number">04</span><span class="module-link-copy"><strong>Guess the sensor</strong><small>Planned</small></span><span class="active-dot" aria-hidden="true"></span>
+          </a>
         </nav>
-        <div class="sidebar-upcoming">
-          <p class="sidebar-heading">UP NEXT</p>
-          <div class="upcoming-item"><span>03</span><span>Second-order response</span></div>
-          <div class="upcoming-item"><span>04</span><span>Guess the sensor</span></div>
-        </div>
+        <div class="sidebar-separator" role="presentation"></div>
+        <nav class="module-navigation" aria-label="Validation">
+          <a href="#validation" class="module-nav-link" data-module="validation" aria-label="Validation checks suite" title="Validation checks suite">
+            <span class="module-number">V</span><span class="module-link-copy"><strong>Validation suite</strong><small>Checks 1–6</small></span><span class="active-dot" aria-hidden="true"></span>
+          </a>
+        </nav>
       </div>
       <div class="sidebar-footer"><span>TEAM 10</span><small>Birzeit University<br>Interfacing Techniques</small></div>
     </aside>
@@ -47,7 +56,7 @@
           <button id="mobileMenuToggle" class="mobile-menu-toggle" type="button" aria-label="Open module navigation" aria-expanded="false" aria-controls="siteSidebar"><span aria-hidden="true">☰</span></button>
           <span class="course-name">ENCS4380 <span class="header-course-detail">/ Interfacing Techniques</span></span>
         </div>
-        <span id="currentModuleName" class="module-tag">01 / First-Order Time Response</span>
+        <span id="currentModuleName" class="module-tag" aria-live="polite">01 / First-Order Time Response</span>
       </header>
       <main class="page main-content" id="mainContent">
         <section id="module-1" class="module-view" aria-label="Module 1: Time Response">
@@ -73,7 +82,7 @@
         <select id="answerSelect" aria-label="Select prediction"></select>
         <button id="checkBtn" type="button">Check Answer</button>
       </div>
-      <p id="feedbackText" class="feedback"></p>
+      <p id="feedbackText" class="feedback" aria-live="polite"></p>
     </section>
     <!-- Controls Panel -->
     <section class="card controls-box">
@@ -114,12 +123,12 @@
     <div class="plots-grid">
       <section class="card plot-card">
         <div class="card-header"><h2>Time Response</h2></div>
-        <div id="timePlot" class="plot-box"></div>
+        <div id="timePlot" class="plot-box" role="img" aria-label="First-order step or ramp response showing ideal input and sensor output"></div>
         <p id="timeNote" class="muted"></p>
       </section>
       <section class="card plot-card">
         <div class="card-header"><h2>Log Error-Fraction</h2><span id="slopeVal" class="mono bold"></span></div>
-        <div id="logPlot" class="plot-box"></div>
+        <div id="logPlot" class="plot-box" role="img" aria-label="Natural logarithm of the error fraction versus time"></div>
         <p id="logNote" class="muted"></p>
       </section>
     </div>
@@ -269,6 +278,184 @@
       </div>
     </section>
 
+        </section>
+
+        <section id="module-3" class="module-view" aria-label="Module 3: Second-Order Response" hidden>
+          <p class="eyebrow">03 / Second-order dynamics · mass-spring-damper</p>
+          <section class="title-section">
+            <div>
+              <h1>Second-Order Response</h1>
+              <p class="subtitle">Explore damping, natural frequency, and the same system in state space. Choose either the response parameters or the physical mass, damper and spring.</p>
+            </div>
+            <div class="equations" aria-label="Second-order transfer function">
+              <p>G(s) = Kωₙ² / (s² + 2ζωₙs + ωₙ²)</p>
+              <p class="muted">Step input · adjustable static gain K</p>
+            </div>
+          </section>
+
+          <section class="card predict-box" aria-labelledby="thirdPredictTitle">
+            <div class="predict-text">
+              <h2 id="thirdPredictTitle">Predict, then check</h2>
+              <p>At the same ωₙ, what happens to step overshoot when damping ζ increases from 0.5 to 1.5?</p>
+            </div>
+            <div class="predict-controls">
+              <select id="thirdPrediction" aria-label="Predict the change in step overshoot">
+                <option value="">Choose your prediction</option>
+                <option value="0">Overshoot increases</option>
+                <option value="1">Overshoot decreases to zero</option>
+                <option value="2">Overshoot stays constant</option>
+              </select>
+              <button id="thirdPredictBtn" type="button">Check Answer</button>
+            </div>
+            <p id="thirdPredictFeedback" class="feedback" aria-live="polite"></p>
+          </section>
+
+          <section class="card controls-box" aria-labelledby="thirdParamsTitle">
+            <div class="controls-top">
+              <div>
+                <h2 id="thirdParamsTitle">System Parameters</h2>
+                <p class="muted">Both input methods update the same physical model, so transfer function and state space always agree.</p>
+              </div>
+              <div class="mode-group third-mode" role="group" aria-label="Choose parameter input type">
+                <label><input id="thirdModelChoice" type="radio" name="thirdSource" value="model" checked> ζ and ωₙ</label>
+                <label><input id="thirdPhysicalChoice" type="radio" name="thirdSource" value="physical"> Physical m, b, k</label>
+              </div>
+              <div class="preset-group third-presets">
+                <button class="btn-outline" type="button" id="thirdUnderPreset">Underdamped</button>
+                <button class="btn-outline" type="button" id="thirdCriticalPreset">Critical</button>
+                <button class="btn-outline" type="button" id="thirdOverPreset">Overdamped</button>
+              </div>
+            </div>
+            <div class="third-control-split">
+              <div id="thirdModelInputs" class="third-input-group">
+                <h3>Response parameters</h3>
+                <div class="third-slider-row">
+                  <div class="slider-item">
+                    <div class="slider-header"><label for="thirdZeta">Damping ratio (ζ)</label><output id="thirdZetaOut" class="mono">0.5</output></div>
+                    <input id="thirdZeta" type="range" min="0" max="2.5" step="0.01" value="0.5">
+                    <div class="slider-bounds"><span>0</span><span>2.5</span></div>
+                  </div>
+                  <div class="slider-item">
+                    <div class="slider-header"><label for="thirdWn">Natural frequency (ωₙ)</label><output id="thirdWnOut" class="mono">2 rad/s</output></div>
+                    <input id="thirdWn" type="range" min="0.5" max="10" step="0.1" value="2">
+                    <div class="slider-bounds"><span>0.5 rad/s</span><span>10 rad/s</span></div>
+                  </div>
+                </div>
+              </div>
+              <div id="thirdPhysicalInputs" class="third-input-group controls-disabled">
+                <h3>Physical mass-spring-damper</h3>
+                <div class="third-slider-row physical">
+                  <div class="slider-item">
+                    <div class="slider-header"><label for="thirdMass">Mass (m)</label><output id="thirdMassOut" class="mono">1 kg</output></div>
+                    <input id="thirdMass" type="range" min="0.5" max="10" step="0.1" value="1" disabled>
+                  </div>
+                  <div class="slider-item">
+                    <div class="slider-header"><label for="thirdDamper">Damping (b)</label><output id="thirdDamperOut" class="mono">2 N·s/m</output></div>
+                    <input id="thirdDamper" type="range" min="0" max="150" step="0.1" value="2" disabled>
+                  </div>
+                  <div class="slider-item">
+                    <div class="slider-header"><label for="thirdSpring">Stiffness (k)</label><output id="thirdSpringOut" class="mono">4 N/m</output></div>
+                    <input id="thirdSpring" type="range" min="0.1" max="1000" step="0.1" value="4" disabled>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="third-gain slider-item">
+              <div class="slider-header"><label for="thirdGain">Static gain (K)</label><output id="thirdGainOut" class="mono">1</output></div>
+              <input id="thirdGain" type="range" min="0.5" max="3" step="0.1" value="1">
+              <div class="slider-bounds"><span>0.5</span><span>3.0</span></div>
+            </div>
+            <p class="third-relation mono">ωₙ = √(k/m) &nbsp;·&nbsp; ζ = b / (2√(km))</p>
+          </section>
+
+          <section class="card" aria-labelledby="thirdMetricsTitle">
+            <div class="card-header"><h2 id="thirdMetricsTitle">Live Time-Domain Measurements</h2><span id="thirdDampingType" class="formula-tag mono"></span></div>
+            <div id="thirdMetrics" class="metrics-grid third-metrics" aria-live="polite"></div>
+          </section>
+
+          <section class="card plot-card third-main-plot">
+            <div class="card-header"><h2>Closed-Form Step Response</h2><span class="small-label">10–90% RISE · ±2% SETTLING BAND</span></div>
+            <div id="thirdResponsePlot" class="plot-box" role="img" aria-label="Second-order step response with rise, peak, overshoot and settling markers"></div>
+            <p id="thirdResponseNote" class="muted"></p>
+          </section>
+
+          <section class="card third-state-card" aria-labelledby="thirdStateTitle">
+            <div class="card-header"><h2 id="thirdStateTitle">State-Space Model</h2><span class="small-label">x₁ = DISPLACEMENT · x₂ = VELOCITY</span></div>
+            <p class="muted">ẋ = Ax + BF(t), &nbsp; y = [1, 0]x. For a target displacement K, apply a force step F₀ = kK N; the physical system then has the same output as the transfer-function model.</p>
+            <div class="third-matrices">
+              <div><span class="matrix-label">A · state matrix</span><pre id="thirdMatrixA" class="matrix mono"></pre></div>
+              <div><span class="matrix-label">B · input matrix</span><pre id="thirdMatrixB" class="matrix mono"></pre></div>
+              <div class="third-state-force"><span class="matrix-label">Force step</span><p id="thirdForce" class="mono"></p><span class="matrix-label">C = [1, 0] · D = 0</span></div>
+            </div>
+          </section>
+
+          <div class="plots-grid third-plots">
+            <section class="card plot-card">
+              <div class="card-header"><h2>Poles in the s-Plane</h2></div>
+              <div id="thirdPolePlot" class="plot-box" role="img" aria-label="Transfer-function poles and matching eigenvalues of A"></div>
+              <dl class="third-roots"><dt>G(s) poles</dt><dd id="thirdPoleText" class="mono"></dd><dt>A eigenvalues</dt><dd id="thirdEigenText" class="mono"></dd></dl>
+            </section>
+            <section class="card plot-card">
+              <div class="card-header"><h2>Phase-Plane Trajectory</h2><span class="small-label">x₁ AGAINST x₂</span></div>
+              <div id="thirdPhasePlot" class="plot-box" role="img" aria-label="Mass-spring-damper displacement against velocity over the step response"></div>
+              <p id="thirdPhaseNote" class="muted"></p>
+            </section>
+          </div>
+
+          <section class="card" aria-labelledby="thirdChecksTitle">
+            <div class="card-header"><h2 id="thirdChecksTitle">Validation Checks 4–6</h2><span id="thirdCheckSummary" class="mono bold pass"></span></div>
+            <p class="muted">Fixed lecture values are checked independently of the current sliders.</p>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Lecture benchmark</th><th>Expected</th><th>Computed</th><th>Status</th></tr></thead>
+              <tbody id="thirdCheckRows"></tbody>
+            </table></div>
+          </section>
+        </section>
+
+        <section id="module-4" class="module-view" aria-label="Module 4: Guess the Sensor Challenge" hidden>
+          <p class="eyebrow">04 / Parameter estimation</p>
+          <section class="title-section"><div>
+            <h1>Guess the Sensor Challenge</h1>
+            <p class="subtitle">This module is reserved for the parameter-estimation challenge. No sensor round is running yet.</p>
+          </div></section>
+          <section class="card planned-panel" aria-labelledby="plannedFourTitle">
+            <span class="planned-number mono" aria-hidden="true">04</span>
+            <div>
+              <p class="planned-status">PLANNED MODULE</p>
+              <h2 id="plannedFourTitle">What this view will contain</h2>
+              <p class="muted">A randomly selected hidden sensor with a noisy response; parameter guesses for τ or ζ and ωₙ; comparison against the true curve, hints, and session scoring.</p>
+              <p class="planned-note">The interactive challenge will be added after the second-order simulator.</p>
+            </div>
+          </section>
+        </section>
+
+        <section id="validation" class="module-view" aria-label="Validation Checks Suite" hidden>
+          <p class="eyebrow">V / Lecture benchmarks</p>
+          <section class="title-section"><div>
+            <h1>Validation Checks Suite</h1>
+            <p class="subtitle">Expected lecture results alongside the implementations in Modules 1, 2 and 3.</p>
+          </div></section>
+          <section class="card validation-overview" aria-labelledby="validationSummaryTitle">
+            <div>
+              <p class="planned-status">CHECKS 1–6</p>
+              <h2 id="validationSummaryTitle">Current verification</h2>
+              <p class="muted">The step check uses Module 1's current parameters. Frequency and second-order checks use the assignment's fixed reference cases.</p>
+            </div>
+            <strong id="suiteSummary" class="suite-score mono" role="status">—</strong>
+          </section>
+          <section class="card" aria-labelledby="suiteTableTitle">
+            <div class="card-header"><h2 id="suiteTableTitle">Expected vs. Computed</h2><span class="small-label">10 BENCHMARK VALUES</span></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th scope="col">Check</th><th scope="col">Expected</th><th scope="col">Computed</th><th scope="col">Result</th></tr></thead>
+                <tbody id="suiteRows"></tbody>
+              </table>
+            </div>
+          </section>
+          <section class="card next-checks">
+            <h2>Six homework checks</h2>
+            <p class="muted">The six numbered homework checks contain ten numerical comparisons: two step, four frequency, and four second-order/state-space results.</p>
+          </section>
         </section>
       </main>
     </div>

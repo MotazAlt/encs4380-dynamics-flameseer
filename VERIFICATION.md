@@ -1,48 +1,61 @@
-# Module 2 — Verification notes
+# Local verification — Modules 1, 2 and 3
 
-This review uses the ENCS4380 Homework 1 assignment, section 3 (Module 2) and section 3.2 (validation checks 2 and 3).
+This report describes **local** checks. The live GitHub Pages deployment is not updated by generating these files.
 
-## 1. Mathematical model
+## Module 1
 
-For the normalized first-order sensor G(s) = 1/(τs + 1) under x(t) = sin(ωt):
+- Step equation: `y(t) − y(0) = KA(1 − exp(−t/τ))`.
+- Tea example (y₀=20°C, A=60°C, K=1, τ=10 s): 57.93°C at τ and 77.01°C at 3τ.
+- Ramp equation: `KR(t−τ+τ exp(−t/τ))`; steady-state lag = τ and asymptotic vertical difference = KRτ.
+- Log error fraction: `−t/τ`; full line visible across τ = 0.5 and 25 s.
+- Presets, markers, prediction, and 2/2 step benchmark values passed.
 
-- M = 1 / sqrt(1 + (ωτ)^2)
-- φ = −atan(ωτ)
-- y_ss(t) = M sin(ωt + φ)
-- ωc = 1/τ; magnitude at cutoff is −3.0103 dB, phase is −45°.
-- Signed dynamic error δ = M − 1; displayed in percent as 100(M − 1).
-- With allowed attenuation e (as a fraction) at f Hz, τmax = sqrt(1/(1−e)^2−1)/(2πf).
+## Module 2
 
-These expressions are coded in `module2.js` and use angular frequency (rad/s) for the sine/Bode experiments, and ordinary frequency (Hz) in the design calculator. Conversion: ω=2πf.
+- Amplitude `M = 1/sqrt(1+(ωτ)²)`; phase `−atan(ωτ)`.
+- At τ = 0.2 s, ω = 2 rad/s: M = 0.92848 and phase = −21.801°.
+- Cutoff `ωc = 1/τ`; dynamic error `δ = M−1`.
+- Maximum τ at 100 Hz and 5% attenuation = 0.52312 ms; lag at 50 Hz = 9.3327°.
+- Sine and Bode charts, cutoff marker, calculator, presets, and 4/4 frequency comparisons passed.
 
-## 2. Assignment benchmarks
+## Module 3
 
-| Check | Expected | Calculated | Result |
-|---|---:|---:|---|
-| τ=0.2 s, x=sin(2t): M | 0.93 | 0.92848 | PASS |
-| τ=0.2 s, x=sin(2t): lag | 21.8° | 21.801° | PASS |
-| 100 Hz, allowed attenuation 5%: τmax | ≈0.52 ms | 0.52312 ms | PASS |
-| Phase lag at 50 Hz using τmax | 9.3° | 9.3327° | PASS |
+- Exact underdamped, critical, and overdamped step responses, with static gain K.
+- ζ=0 is undamped: sustained oscillations, 100% overshoot, and no finite 2% settling time.
+- Rise time uses first 10% and 90% crossings; settling time finds the **last** crossing of the ±2% band (not the approximate `4/(ζωₙ)` value).
+- Default ζ = 0.5, ωₙ = 2 rad/s, K = 1: tᵣ = 0.818786 s; tₚ = 1.813799 s; overshoot = 16.303353%; tₛ = 4.038174 s.
+- Critical and overdamped outputs do not overshoot; tested ζ = 1 and ζ = 1.5.
+- Physical model m=1 kg, b=2 N·s/m, k=4 N/m gives ζ=0.5, ωₙ=2 rad/s, and A=[0 1;−4 −2], B=[0;1].
+- Poles of the transfer function and eigenvalues computed separately from A: −1 ± j1.73205 s⁻¹.
+- Gain K=2 test: final displacement 2 m, force step 8 N, equilibrium point (2,0).
+- Further damping edge cases tested at ζ=0.01, 0.1, 0.99, 1.01, 2.5, and 10. All evaluated finite settling-time values remained within ±2% afterward.
+- Module 3 validation: 4/4 numeric comparisons passed (checks 4–6).
 
-The table on the page checks these fixed lecture examples independently of the active sliders.
+## Integrated browser tests
 
-## 3. Interaction regression checks
+- Chromium viewport widths: 1440, 850, 390, and 320 px, with no page JavaScript exceptions or horizontal overflow.
+- Switch between Modules 1, 2, 3 and the validation view. Mobile sidebar open/close and navigation tested.
+- Normalized and physical parameter controls, damping presets, K slider, prediction interaction, all three plots, and live matrices tested.
+- Validation suite: **10/10 numerical comparisons**, across six numbered assignment checks.
+- Actual standalone HTTP/HTTPS navigation could not be tested in this sandbox, so final GitHub Pages deployment must still be checked.
 
-Tested the project through a self-contained browser preview using actual project HTML, CSS, JavaScript, and the bundled Plotly source:
+## After final audit
 
-1. Both Module 1 and Module 2 render, and their plots appear when switching views.
-2. Direct `#module-2` selection activates the correct view and active sidebar state.
-3. Slider and exact-number entries update magnitude, phase, and both plots.
-4. At the input bounds (τ=0.0001–1 s, ω=0.01–10000 rad/s) values remain finite.
-5. Invalid exact-number and calculator inputs are indicated and do not corrupt the plots.
-6. The `sin(2t)` and 100 Hz presets produce the expected numbers.
-7. The prediction question provides feedback; validation checks remain accessible.
-8. Desktop sidebar collapse, mobile drawer, Escape-to-close, keyboard focus, and view navigation work.
-9. Browser viewports 1440, 850, 390, and 320 px produce no JavaScript errors or horizontal document overflow.
-10. Original Module 1 step/ramp controls, tea preset, and 2/2 validation remain functional.
+- Scoped Module 1 slider/radio listeners to `#module-1` and exposed `window.Module1` for validation.
+- Gave Module 1 and Module 2 independent validation data functions, shared by both their own tables and the unified suite.
+- Fixed initial script loading to Plotly → Module 1 → Module 2 router → Module 3 and delayed hash activation until DOMContentLoaded (after all deferred scripts register).
+- Preserved Module 4 as a clearly labeled placeholder.
 
-**Deployment boundary:** Direct HTTP navigation to a local test server was blocked by the test environment. Source references and paths were checked separately. The live GitHub Pages URL was not tested here; verify it in a private browser window after uploading.
+## Final regression tests (12 November 2026)
 
-## 4. Scope and release readiness
+- Chromium interactive-browser checks passed at **1440, 850, 390 and 320 px**, with no JavaScript exceptions or horizontal overflow.
+- Direct initial URLs ending in `#module-1`, `#module-2`, `#module-3` and `#validation` activate their views and render the appropriate charts.
+- Test instrumentation verified that interacting with Module 2 and Module 3 controls does not call Module 1's Plotly redraw functions.
+- Module 1's table and unified suite return the same two **PASS** results even when Ramp is selected and its slope differs from the retained step amplitude.
+- All six numbered assignment checks (ten numerical comparisons) pass on the validation page.
+- Boundary tests: τ = 0.5 and 25 s (Module 1); τ = 0.0001 and 1 s, ω = 0.01 and 10,000 rad/s (Module 2); ζ = 0, 0.01, 0.99, 1, 1.01 and 2.5, and a strongly overdamped physical model (Module 3).
+- Module 4 remains a placeholder, per scope. Actual GitHub Pages deployment was not tested in this sandbox; references to local CSS/JavaScript assets were checked and all target files are included.
 
-This package implements Modules **1 and 2 only**. The full homework also requires Modules 3 and 4, validation checks 4–6, and an appropriate tagged final release. The assignment additionally requires team responsibilities and members' actual commit history; only team names were supplied, so responsibilities are not invented here.
+## Before submission
+
+Deploy the project files to the root of the repository, verify the latest successful GitHub Pages deployment, and test the public URL on a phone. Module 4 remains to be built for the complete homework. Document actual member responsibilities and contribution history.

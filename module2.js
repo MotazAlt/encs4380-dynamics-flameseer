@@ -9,7 +9,14 @@
   const OMEGA_MAX = 10000;
   const RAD_TO_DEG = 180 / Math.PI;
   const state = { tau: 0.2, omega: 2 };
-  const modules = ['module-1', 'module-2'];
+  const modules = ['module-1', 'module-2', 'module-3', 'module-4', 'validation'];
+  const moduleNames = {
+    'module-1': '01 / First-Order Time Response',
+    'module-2': '02 / First-Order Frequency Response',
+    'module-3': '03 / Second-Order Response',
+    'module-4': '04 / Guess the Sensor',
+    validation: 'V / Validation Checks'
+  };
   let currentModule = 'module-1';
   let framePending = false;
 
@@ -127,7 +134,7 @@
         { type: 'line', x0: outputPeak, x1: outputPeak, y0: -1, y1: 1, line: { color: '#0f766e', width: 1, dash: 'dot' } }
       ]
     }, { responsive: true, displayModeBar: false });
-    $('frequencyNote').textContent = `The output amplitude is ${sig(M, 4)} of the input, with ${sig(-phi * RAD_TO_DEG, 4)}° lag (${sig((outputPeak - inputPeak), 4)} s at this frequency).`;
+    $('frequencyNote').textContent = `At ${sig(state.omega, 4)} rad/s (${sig(state.omega / (2 * Math.PI), 4)} Hz), the output amplitude is ${sig(M, 4)} of the input with ${sig(-phi * RAD_TO_DEG, 4)}° lag (${sig(outputPeak - inputPeak, 4)} s).`;
   }
 
   // 5. Bode magnitude in dB and phase in degrees, with cutoff at 1/tau.
@@ -221,26 +228,32 @@
   }
 
   // 7. Independent slide-number benchmarks: checks 2 and 3.
-  function runFrequencyValidation() {
+  function frequencyBenchmarks() {
     const lectureM = magnitude(2, 0.2);
     const lectureLag = -phase(2, 0.2) * RAD_TO_DEG;
     const tau100 = maxTau(100, 5);
     const lag50 = -phase(2 * Math.PI * 50, tau100) * RAD_TO_DEG;
-    const checks = [
-      ['Amp', lectureM, 0.93, 0.01, sig(lectureM, 5)],
-      ['Phase', lectureLag, 21.8, 0.15, `${sig(lectureLag, 5)}°`],
-      ['Tau', tau100 * 1000, 0.52, 0.02, `${sig(tau100 * 1000, 5)} ms`],
-      ['50', lag50, 9.3, 0.15, `${sig(lag50, 5)}°`]
-    ];
-    let passed = 0;
-    for (const [id, actual, expected, tol, display] of checks) {
-      const good = Math.abs(actual - expected) <= tol;
-      if (good) passed++;
-      $(`freqVal${id}`).textContent = display;
-      const element = $(`freqVal${id}Status`);
-      element.textContent = good ? 'PASS' : 'FAIL';
-      element.className = good ? 'mono bold pass' : 'mono bold fail';
+    return [
+      { id: 'Amp', label: '2 / Sine amplitude', expected: '0.93', actual: lectureM, reference: 0.93, tolerance: 0.01, display: sig(lectureM, 5) },
+      { id: 'Phase', label: '2 / Sine phase lag', expected: '21.8°', actual: lectureLag, reference: 21.8, tolerance: 0.15, display: `${sig(lectureLag, 5)}°` },
+      { id: 'Tau', label: '3 / Maximum τ at 100 Hz', expected: '≈ 0.52 ms', actual: tau100 * 1000, reference: 0.52, tolerance: 0.02, display: `${sig(tau100 * 1000, 5)} ms` },
+      { id: '50', label: '3 / Phase lag at 50 Hz', expected: '9.3°', actual: lag50, reference: 9.3, tolerance: 0.15, display: `${sig(lag50, 5)}°` }
+    ].map(c => ({ ...c, result: Math.abs(c.actual - c.reference) <= c.tolerance ? 'PASS' : 'FAIL' }));
+  }
+
+  function frequencyValidationRows() {
+    return frequencyBenchmarks().map(c => [c.label, c.expected, c.display, c.result]);
+  }
+
+  function runFrequencyValidation() {
+    const checks = frequencyBenchmarks();
+    for (const c of checks) {
+      $(`freqVal${c.id}`).textContent = c.display;
+      const element = $(`freqVal${c.id}Status`);
+      element.textContent = c.result;
+      element.className = c.result === 'PASS' ? 'mono bold pass' : 'mono bold fail';
     }
+    const passed = checks.filter(c => c.result === 'PASS').length;
     $('freqCheckSummary').textContent = `${passed} / 4 Benchmarks Passed`;
     $('freqCheckSummary').className = passed === 4 ? 'mono bold pass' : 'mono bold fail';
   }
@@ -288,21 +301,45 @@
     });
   }
 
-  // 9. Hash-based module navigation with desktop collapse and mobile drawer.
+  // 9. Validation suite for Modules 1, 2, and 3.
+  function updateValidationSuite() {
+    const checks = window.Module1?.validationRows() || [
+      ['1 / Step at τ', '63.2% of KA', 'Unavailable', 'FAIL'],
+      ['1 / Step at 3τ', '95.0% of KA', 'Unavailable', 'FAIL']
+    ];
+    checks.push(...frequencyValidationRows());
+    checks.push(...(window.Module3?.validationRows() || [
+      ['4–6 / Second-order and state space', '4 comparisons', 'Unavailable', 'FAIL']
+    ]));
+    $('suiteRows').innerHTML = checks.map(([label, expected, actual, result]) =>
+      `<tr><td>${label}</td><td class="mono">${expected}</td>` +
+      `<td class="mono">${actual}</td><td class="mono bold ${result === 'PASS' ? 'pass' : 'fail'}">${result}</td></tr>`
+    ).join('');
+    const passed = checks.filter(item => item[3] === 'PASS').length;
+    $('suiteSummary').textContent = `${passed} / 10 PASS`;
+    $('suiteSummary').classList.toggle('fail', passed !== 10 || checks.length !== 10);
+    $('suiteSummary').classList.toggle('pass', passed === 10 && checks.length === 10);
+  }
+
+  // 10. Hash navigation, desktop collapse, and an accessible mobile drawer.
   const sidebar = $('siteSidebar');
-  const appMain = $('mainContent');
+  const appMain = document.querySelector('.app-main');
+  const mobileQuery = window.matchMedia('(max-width: 900px)');
+
   function closeMobileMenu(restoreFocus = false) {
     const wasOpen = document.body.classList.contains('mobile-open');
     document.body.classList.remove('mobile-open');
     appMain.inert = false;
     $('navBackdrop').hidden = true;
+    sidebar.inert = mobileQuery.matches;
     $('mobileMenuToggle').setAttribute('aria-expanded', 'false');
     $('mobileMenuToggle').setAttribute('aria-label', 'Open module navigation');
     if (wasOpen && restoreFocus) $('mobileMenuToggle').focus();
   }
+
   function activateModule() {
-    const fromMobileNav = document.body.classList.contains('mobile-open');
-    const hash = window.location.hash.replace('#', '');
+    const wasMobileOpen = document.body.classList.contains('mobile-open');
+    const hash = window.location.hash.slice(1);
     currentModule = modules.includes(hash) ? hash : 'module-1';
     for (const id of modules) $(id).hidden = id !== currentModule;
     document.querySelectorAll('.module-nav-link').forEach(link => {
@@ -311,16 +348,12 @@
       if (active) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
     });
-    $('currentModuleName').textContent = currentModule === 'module-1'
-      ? '01 / First-Order Time Response' : '02 / First-Order Frequency Response';
+    $('currentModuleName').textContent = moduleNames[currentModule];
     closeMobileMenu();
-    if (fromMobileNav) requestAnimationFrame(() => {
-      const heading = document.querySelector(`#${currentModule} h1`);
-      if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
-    });
-    if (currentModule === 'module-2') {
-      renderFrequency();
-    } else if (typeof Plotly !== 'undefined') {
+    if (currentModule === 'module-2') renderFrequency();
+    if (currentModule === 'module-3' && window.Module3) window.Module3.render();
+    if (currentModule === 'validation') updateValidationSuite();
+    if (currentModule === 'module-1' && typeof Plotly !== 'undefined') {
       requestAnimationFrame(() => {
         for (const id of ['timePlot', 'logPlot']) {
           const plot = $(id);
@@ -328,6 +361,10 @@
         }
       });
     }
+    if (wasMobileOpen) requestAnimationFrame(() => {
+      const heading = document.querySelector(`#${currentModule} h1`);
+      if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
+    });
     window.scrollTo(0, 0);
   }
 
@@ -339,13 +376,16 @@
     $('sidebarCollapse').textContent = collapsed ? '›' : '‹';
   });
   $('mobileMenuToggle').addEventListener('click', () => {
-    const open = document.body.classList.toggle('mobile-open');
+    const open = !document.body.classList.contains('mobile-open');
+    document.body.classList.toggle('mobile-open', open);
+    sidebar.inert = !open;
     appMain.inert = open;
     $('navBackdrop').hidden = !open;
     $('mobileMenuToggle').setAttribute('aria-expanded', String(open));
     $('mobileMenuToggle').setAttribute('aria-label', open ? 'Close module navigation' : 'Open module navigation');
-    if (open) sidebar.querySelector('.module-nav-link.is-active').focus();
+    if (open) $('mobileSidebarClose').focus();
   });
+  $('mobileSidebarClose').addEventListener('click', () => closeMobileMenu(true));
   $('navBackdrop').addEventListener('click', () => closeMobileMenu(true));
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && document.body.classList.contains('mobile-open')) {
@@ -354,36 +394,39 @@
   });
   sidebar.addEventListener('keydown', event => {
     if (event.key !== 'Tab' || !document.body.classList.contains('mobile-open')) return;
-    const links = [...sidebar.querySelectorAll('a[href]')];
-    const first = links[0], last = links[links.length - 1];
+    const focusable = [...sidebar.querySelectorAll('a[href], button')]
+      .filter(el => !el.disabled && el.getClientRects().length);
+    const first = focusable[0], last = focusable[focusable.length - 1];
     if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
+      event.preventDefault(); last.focus();
     } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
+      event.preventDefault(); first.focus();
     }
   });
+  mobileQuery.addEventListener('change', () => closeMobileMenu());
   window.addEventListener('hashchange', activateModule);
-  document.querySelectorAll('.module-nav-link, .brand').forEach(link => link.addEventListener('click', () => {
-    const linkTarget = link.getAttribute('href').slice(1);
-    if (location.hash === `#${linkTarget}`) activateModule();
-  }));
+  document.querySelectorAll('.module-nav-link, .brand').forEach(link =>
+    link.addEventListener('click', () => {
+      if (location.hash === link.getAttribute('href')) activateModule();
+    })
+  );
 
-  // Resize plots when the sidebar changes the available content width.
+  // 11. Redraw visible plots when the sidebar changes available width.
   if (typeof ResizeObserver !== 'undefined') {
     let resizeFrame = 0;
     new ResizeObserver(() => {
       cancelAnimationFrame(resizeFrame);
       resizeFrame = requestAnimationFrame(() => {
         if (typeof Plotly === 'undefined') return;
-        const ids = currentModule === 'module-1' ? ['timePlot', 'logPlot'] : ['frequencyPlot', 'bodePlot'];
+        const ids = currentModule === 'module-1' ? ['timePlot', 'logPlot'] :
+          currentModule === 'module-2' ? ['frequencyPlot', 'bodePlot'] :
+          currentModule === 'module-3' ? ['thirdResponsePlot', 'thirdPolePlot', 'thirdPhasePlot'] : [];
         for (const id of ids) {
           const plot = $(id);
           if (plot && plot.data && plot.clientWidth > 0) Plotly.Plots.resize(plot);
         }
       });
-    }).observe(document.querySelector('.app-main'));
+    }).observe(appMain);
   }
 
   attachSlider('freqTauSlider', 'tau');
@@ -400,5 +443,7 @@
   syncControls();
   updateDesignCalculator();
   runFrequencyValidation();
-  activateModule();
+  // defer scripts finish before DOMContentLoaded, including module3.js.
+  // This also renders Module 3 when the page opens directly at #module-3.
+  document.addEventListener('DOMContentLoaded', activateModule, { once: true });
 })();
