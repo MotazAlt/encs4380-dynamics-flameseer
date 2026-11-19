@@ -1,6 +1,6 @@
-// Module 3: Second-Order Response & Mass-Spring-Damper State Space
 (() => {
   'use strict';
+
   const $ = id => document.getElementById(id);
   const PI = Math.PI;
   const state = { zeta: 0.5, wn: 2, K: 1, m: 1, b: 2, k: 4 };
@@ -18,7 +18,6 @@
     return Number(v.toFixed(decimals)).toString();
   }
 
-  // Closed-form step response for G(s) = K * wn^2 / (s^2 + 2*zeta*wn*s + wn^2)
   function response(t, zeta, wn, K = 1) {
     if (t <= 0) return { x: 0, v: 0 };
     if (zeta < 1) {
@@ -56,7 +55,6 @@
     return [{ re: -wn * (zeta - q), im: 0 }, { re: -wn * (zeta + q), im: 0 }];
   }
 
-  // Eigenvalues of A = [[0, 1], [-k/m, -b/m]] from trace and determinant
   function eigenvalues(m, b, k) {
     const trace = -b / m;
     const determinant = k / m;
@@ -91,7 +89,7 @@
   }
 
   function settlingTime(zeta, wn) {
-    if (zeta === 0) return Infinity; // undamped oscillation never settles
+    if (zeta === 0) return Infinity;
     if (zeta >= 1) return bisectCrossing(0.98, zeta, wn);
     const wd = wn * Math.sqrt(1 - zeta * zeta);
     const envelope = 1 / Math.sqrt(1 - zeta * zeta);
@@ -118,7 +116,6 @@
     const t90 = bisectCrossing(0.9, zeta, wn);
     const ts = settlingTime(zeta, wn);
     let duration = zeta === 0 ? 6 * PI / wn : Math.max(7 / wn, ts * 1.13);
-    // Find visible early peaks from curve samples before choosing the final window.
     let visiblePeak = 1, visiblePeakTime = 0;
     for (let i = 0; i <= 1200; i++) {
       const t = 12 * i / (1200 * wn);
@@ -126,7 +123,6 @@
       if (x > visiblePeak) { visiblePeak = x; visiblePeakTime = t; }
     }
     if (100 * (visiblePeak - 1) >= 0.01) duration = Math.max(duration, visiblePeakTime * 1.12);
-    // Extra early samples resolve the first peak even when settling takes much longer.
     const time = [];
     const count = 1800;
     const earlyEnd = Math.min(duration, 12 / wn);
@@ -178,7 +174,7 @@
   }
 
   function queueRender() {
-    if (window.location.hash !== '#module-3' || renderQueued) return;
+    if ($('module-3').hidden || renderQueued) return;
     renderQueued = true;
     requestAnimationFrame(() => {
       renderQueued = false;
@@ -186,17 +182,11 @@
     });
   }
 
-  const layout = {
-    paper_bgcolor: '#fff', plot_bgcolor: '#fff',
-    font: { family: 'system-ui, sans-serif', color: '#182521', size: 12 },
-    margin: { l: 52, r: 22, t: 35, b: 50 },
-    legend: { orientation: 'h', x: 0, y: 1.17 }
-  };
-  const axis = { gridcolor: '#e6eeea', zeroline: false, linecolor: '#95a49d', fixedrange: true };
-  const chartConfig = { responsive: true, displayModeBar: false };
+  const layout = { margin: { l: 52, r: 22, t: 35, b: 50 } };
 
   function render() {
     syncControls();
+    const c = ToolkitCharts.colors();
     const { zeta, wn, K, m, b, k } = state;
     const f = features(zeta, wn, K);
     const roots = poles(zeta, wn);
@@ -204,43 +194,40 @@
     const damping = zeta < 1 ? (zeta === 0 ? 'Undamped (sustained oscillation)' : 'Underdamped') :
       zeta === 1 ? 'Critically damped' : 'Overdamped';
     const { duration, time, position, velocity } = f;
-    const showTime = t => Number.isFinite(t) ? `${format(t, 3)} s` : 'Never';
-    const metrics = [
-      ['Rise time (10–90%)', showTime(f.tr)],
-      ['Peak time (tₚ)', f.tp === null ? (zeta < 1 ? 'No visible peak' : 'No peak') : showTime(f.tp)],
-      ['Overshoot (%OS)', `${format(f.overshoot, 3)}%`],
-      ['Settling time (±2%)', showTime(f.ts)]
-    ];
+    const showTime = t => Number.isFinite(t) ? `${t.toFixed(2)} s` : 'Never';
     $('thirdDampingType').textContent = damping;
-    $('thirdMetrics').innerHTML = metrics.map(([name, value]) =>
-      `<div class="metric-item"><div class="metric-label">${name}</div><div class="metric-value mono">${value}</div></div>`
-    ).join('');
+    ToolkitCharts.renderMetrics('thirdMetrics', [
+      ['Rise time (T<sub>r</sub>, 10–90%)', showTime(f.tr)],
+      ['Peak time (T<sub>p</sub>)', f.tp === null ? (zeta < 1 ? 'No visible peak' : 'No peak') : showTime(f.tp)],
+      ['Overshoot (%OS)', `${f.overshoot.toFixed(2)}%`],
+      ['Settling time (T<sub>s</sub>, ±2%)', showTime(f.ts)]
+    ]);
 
     const points = [
-      { t: f.t10, text: '10%', color: '#596e64', place: 'bottom center' },
-      { t: f.t90, text: 'tᵣ (90%)', color: '#596e64', place: 'bottom center' }
+      { t: f.t10, text: '10%', color: c.text, place: 'bottom center' },
+      { t: f.t90, text: '90%', color: c.text, place: 'bottom center' }
     ];
-    if (f.tp !== null) points.push({ t: f.tp, text: `tₚ · ${format(f.overshoot, 1)}% OS`, color: '#ad492e', place: 'top center' });
-    if (Number.isFinite(f.ts)) points.push({ t: f.ts, text: 'tₛ (2%)', color: '#0f766e', place: 'bottom center' });
+    if (f.tp !== null) points.push({ t: f.tp, text: `T<sub>p</sub> · ${f.overshoot.toFixed(2)}% OS`, color: c.truth, place: 'top center' });
+    if (Number.isFinite(f.ts)) points.push({ t: f.ts, text: 'T<sub>s</sub> (2%)', color: c.accent, place: 'bottom center' });
     const markers = points.map(p => ({
       x: [p.t], y: [response(p.t, zeta, wn, K).x],
       text: [p.text], textposition: p.place, name: p.text, mode: 'markers+text',
       showlegend: false, marker: { size: 9, color: p.color },
       textfont: { size: 11, color: p.color }
     }));
-    Plotly.react('thirdResponsePlot', [
-      { x: time, y: position, mode: 'lines', name: 'Displacement x₁(t)', line: { color: '#0f766e', width: 3 } },
-      { x: [0, duration], y: [K, K], mode: 'lines', name: 'Final reading', line: { color: '#7e8d85', dash: 'dash', width: 1.5 } },
+    ToolkitCharts.draw('thirdResponsePlot', [
+      { x: time, y: position, mode: 'lines', name: 'Displacement x<sub>1</sub>(t)', line: ToolkitCharts.line.process },
+      { x: [0, duration], y: [K, K], mode: 'lines', name: 'Final reading', line: ToolkitCharts.line.setpoint },
       ...markers
     ], {
       ...layout,
-      xaxis: { ...axis, title: { text: 'Time (s)' }, range: [0, duration] },
-      yaxis: { ...axis, title: { text: 'Displacement (m)' }, range: [Math.min(0, ...position) - K * 0.08, Math.max(K * 1.08, ...position) + K * 0.1] },
+      xaxis: { title: { text: 'Time (s)' }, range: [0, duration] },
+      yaxis: { title: { text: 'Displacement (m)' }, range: [Math.min(0, ...position) - K * 0.08, Math.max(K * 1.08, ...position) + K * 0.1] },
       shapes: [
-        { type: 'line', x0: 0, x1: duration, y0: K * 0.98, y1: K * 0.98, line: { color: '#b6c9c0', dash: 'dot', width: 1 } },
-        { type: 'line', x0: 0, x1: duration, y0: K * 1.02, y1: K * 1.02, line: { color: '#b6c9c0', dash: 'dot', width: 1 } }
+        { type: 'line', x0: 0, x1: duration, y0: K * 0.98, y1: K * 0.98, line: { color: c.bandLine, dash: 'dot', width: 1 } },
+        { type: 'line', x0: 0, x1: duration, y0: K * 1.02, y1: K * 1.02, line: { color: c.bandLine, dash: 'dot', width: 1 } }
       ]
-    }, chartConfig);
+    });
     $('thirdResponseNote').textContent = `Step response (K = ${format(K)}); rise time is the 10%–90% transition. Peak and overshoot come from the curve samples; peaks below 0.01% are not marked. ${zeta === 0 ? 'No settling at zero damping.' : 'Settling uses the last crossing of the ±2% band.'}`;
 
     [0, 1, -k / m, -b / m].forEach((value, i) => {
@@ -257,24 +244,24 @@
     const eigenX = aEigen.map(p => p.re), eigenY = aEigen.map(p => p.im);
     const xMinimum = Math.min(...rootX, ...eigenX, -wn) * 1.2;
     const imagMax = Math.max(1, wn * 1.2, ...rootY.map(Math.abs), ...eigenY.map(Math.abs));
-    Plotly.react('thirdPolePlot', [
-      { x: rootX, y: rootY, name: 'G(s) poles (rings)', mode: 'markers', marker: { symbol: 'circle-open', size: 21, color: '#0f766e', line: { width: 2.4 } } },
-      { x: eigenX, y: eigenY, name: 'A eigenvalues (×)', mode: 'markers', marker: { symbol: 'x', size: 10, color: '#ad492e', line: { width: 2.2 } } }
+    ToolkitCharts.draw('thirdPolePlot', [
+      { x: rootX, y: rootY, name: 'G(s) poles (rings)', mode: 'markers', marker: { symbol: 'circle-open', size: 21, color: c.accent, line: { width: 2.4 } } },
+      { x: eigenX, y: eigenY, name: 'A eigenvalues (×)', mode: 'markers', marker: { symbol: 'x', size: 10, color: c.truth, line: { width: 2.2 } } }
     ], {
       ...layout, margin: { l: 50, r: 18, t: 45, b: 45 },
-      xaxis: { ...axis, title: { text: 'Real (s⁻¹)' }, range: [xMinimum, wn * 0.3] },
-      yaxis: { ...axis, title: { text: 'Imaginary (s⁻¹)' }, range: [-imagMax, imagMax] },
-      shapes: [{ type: 'line', x0: 0, x1: 0, y0: -imagMax, y1: imagMax, line: { color: '#98aba1', dash: 'dash' } }]
-    }, chartConfig);
+      xaxis: { title: { text: 'Real (s⁻¹)' }, range: [xMinimum, wn * 0.3] },
+      yaxis: { title: { text: 'Imaginary (s⁻¹)' }, range: [-imagMax, imagMax] },
+      shapes: [{ type: 'line', x0: 0, x1: 0, y0: -imagMax, y1: imagMax, line: { color: c.mutedLine, dash: 'dash' } }]
+    });
 
-    Plotly.react('thirdPhasePlot', [
-      { x: position, y: velocity, mode: 'lines', name: 'State trajectory', line: { color: '#0f766e', width: 2.5 } },
-      { x: [0, K], y: [0, 0], mode: 'markers', name: 'Start / equilibrium', marker: { color: ['#ad492e', '#24362e'], size: 9, symbol: ['circle', 'diamond'] } }
+    ToolkitCharts.draw('thirdPhasePlot', [
+      { x: position, y: velocity, mode: 'lines', name: 'State trajectory', line: ToolkitCharts.line.process },
+      { x: [0, K], y: [0, 0], mode: 'markers', name: 'Start / equilibrium', marker: { color: [c.truth, c.ink], size: 9, symbol: ['circle', 'diamond'] } }
     ], {
       ...layout, showlegend: true, margin: { l: 58, r: 18, t: 34, b: 49 },
-      xaxis: { ...axis, title: { text: 'x₁ — Displacement (m)' } },
-      yaxis: { ...axis, title: { text: 'x₂ — Velocity (m/s)' } }
-    }, chartConfig);
+      xaxis: { title: { text: 'x<sub>1</sub> — Displacement (m)' } },
+      yaxis: { title: { text: 'x<sub>2</sub> — Velocity (m/s)' } }
+    });
     $('thirdPhaseNote').textContent = zeta === 0 ? `No damping: a closed orbit around the equilibrium (${format(K)}, 0).` :
       zeta < 1 ? `Underdamped: trajectory spirals toward (${format(K)}, 0).` :
         `Critical / overdamped: trajectory approaches (${format(K)}, 0) without oscillating.`;
@@ -294,7 +281,7 @@
     return [
       ['4 / ζ = 0.5 overshoot', '16.3%', `${format(osHalf, 3)}%`, Math.abs(osHalf - 16.3) < 0.1 ? 'PASS' : 'FAIL'],
       ['5 / ζ = 1 overshoot', '0%', `${format(osCritical)}%`, osCritical === 0 ? 'PASS' : 'FAIL'],
-      ['6 / m=1, b=2, k=4', 'ζ = 0.5, ωₙ = 2', `ζ = ${format(zeta)}, ωₙ = ${format(wn)}`, Math.abs(zeta - 0.5) < 1e-12 && Math.abs(wn - 2) < 1e-12 ? 'PASS' : 'FAIL'],
+      ['6 / m=1, b=2, k=4', 'ζ = 0.5, ω<sub>n</sub> = 2', `ζ = ${format(zeta)}, ω<sub>n</sub> = ${format(wn)}`, Math.abs(zeta - 0.5) < 1e-12 && Math.abs(wn - 2) < 1e-12 ? 'PASS' : 'FAIL'],
       ['6 / Poles = A eigenvalues', '−1 ± j1.732', `${format(eigenReal)} ± j${format(eigenImag)}`, sameEigen && Math.abs(eigenImag - 1.732) < 0.001 ? 'PASS' : 'FAIL']
     ];
   }

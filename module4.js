@@ -1,4 +1,3 @@
-// Module 4: randomized sensor identification, noisy measurements and session scoring.
 (() => {
   'use strict';
 
@@ -14,7 +13,6 @@
   function display(value, digits = 3) {
     return Number(value.toFixed(digits)).toString();
   }
-  // The sum of uniform samples gives a small, zero-centered noise distribution.
   function noise(std) {
     return std * (Math.random() + Math.random() + Math.random() + Math.random() - 2) * Math.sqrt(3);
   }
@@ -27,7 +25,6 @@
     if (kind === 'second-step') {
       sensor.zeta = randomBetween(0.15, 0.8);
       sensor.wn = randomBetween(1.2, 6.2);
-      // Random padding keeps the window from encoding an exact hidden parameter.
       sensor.end = randomBetween(5, 8) / (sensor.zeta * sensor.wn);
     } else {
       sensor.K = randomBetween(0.65, 2.25);
@@ -54,7 +51,6 @@
         y = sensor.K * ratio * Math.sin(sensor.omega * t + phase);
         sensor.inputY.push(Math.sin(sensor.omega * t));
       } else {
-        // Same closed-form response as Module 3, evaluated at unit static gain.
         y = window.Module3.response(t, sensor.zeta, sensor.wn, 1).x;
       }
       const amplitude = kind === 'first-sine' ? sensor.K / Math.hypot(1, sensor.omega * sensor.tau) :
@@ -109,33 +105,31 @@
       $('challengePlot').textContent = 'Plotly is unavailable. Check plotly.min.js.';
       return;
     }
+    const c = ToolkitCharts.colors();
     const sensor = current;
     const traces = [];
     if (sensor.kind === 'first-sine') {
       traces.push({ x: sensor.t, y: sensor.inputY, name: 'Known input', mode: 'lines',
-        line: { color: '#6b7280', dash: 'dash', width: 1.8 } });
+        line: ToolkitCharts.line.setpoint });
     }
     traces.push({ x: sensor.t, y: sensor.noisyY, name: 'Measured (noisy)', mode: 'lines',
-      line: { color: '#0f766e', width: 2 } });
+      line: { ...ToolkitCharts.line.process, width: 2 } });
     if (sensor.revealed) {
       traces.push({ x: sensor.t, y: sensor.guessY, name: 'Your estimate', mode: 'lines',
-        line: { color: '#6352a3', dash: 'dash', width: 2.8 } });
+        line: { color: c.purple, dash: 'dash', width: 2.8 } });
       traces.push({ x: sensor.t, y: sensor.trueY, name: 'True model', mode: 'lines',
-        line: { color: '#bd4d2c', width: 2.8 } });
+        line: { color: c.truth, width: 2.8 } });
     }
     const all = [...sensor.noisyY, ...sensor.inputY,
       ...(sensor.revealed ? [...sensor.guessY, ...sensor.trueY] : [])];
     const lowest = Math.min(0, ...all);
     const highest = Math.max(0, ...all);
     const pad = Math.max(0.15, (highest - lowest) * 0.12);
-    Plotly.react('challengePlot', traces, {
-      paper_bgcolor: '#fff', plot_bgcolor: '#fff',
-      font: { family: 'system-ui, sans-serif', color: '#25342d', size: 12 },
+    ToolkitCharts.draw('challengePlot', traces, {
       margin: { l: 55, r: 17, t: 44, b: 48 },
-      legend: { orientation: 'h', x: 0, y: 1.02, yanchor: 'bottom' },
-      xaxis: { title: { text: 'Time (s)' }, range: [0, sensor.end], gridcolor: '#e5eae7', zeroline: false, fixedrange: true },
-      yaxis: { title: { text: 'Sensor reading' }, range: [lowest - pad, highest + pad], gridcolor: '#e5eae7', zeroline: false, fixedrange: true }
-    }, { responsive: true, displayModeBar: false });
+      xaxis: { title: { text: 'Time (s)' }, range: [0, sensor.end] },
+      yaxis: { title: { text: 'Sensor reading' }, range: [lowest - pad, highest + pad] }
+    });
     $('challengePlotNote').textContent = sensor.revealed
       ? `Orange = true model. Purple dashed = your estimate${sensor.kind === 'second-step' ? '' : ' using the revealed true K'}. Teal = original noisy measurement.`
       : sensor.kind === 'first-sine'
@@ -152,7 +146,7 @@
         ? ['The gray dashed curve is the known input. Compare its peak time with the noisy output peaks to estimate phase lag.',
            'Phase lag is |φ| = atan(ωτ), so τ = tan(|φ|)/ω. Convert peak delay Δt to phase using |φ| = ωΔt.']
         : ['Percentage overshoot depends only on ζ; the peak time depends on both ζ and ωₙ.',
-           'Use %OS = 100 exp(−πζ/√(1−ζ²)), then tₚ = π/(ωₙ√(1−ζ²)).'];
+           'Use %OS = 100 exp(−πζ/√(1−ζ²)), then Tₚ = π/(ωₙ√(1−ζ²)).'];
     const index = Math.min(current.hintIndex, hints.length - 1);
     $('challengeHint').textContent = `Hint ${index + 1}: ${hints[index]}`;
     current.hintIndex++;
@@ -188,7 +182,6 @@
     const perfect = errors.every(error => error <= 0.1 + 1e-12);
     const points = perfect ? 100 : Math.min(99, Math.max(0, Math.round(100 * (1 - (worst - 0.1) / 0.9))));
 
-    // Freeze the submitted guess and draw it over the same observation window.
     current.guessY = current.t.map(t => {
       if (second) return window.Module3.response(t, guesses[0], guesses[1], 1).x;
       if (current.kind === 'first-step') return current.K * (1 - Math.exp(-t / guesses[0]));
@@ -224,7 +217,6 @@
   $('challengeNew').addEventListener('click', newSensor);
   $('challengeHintBtn').addEventListener('click', showHint);
   $('challengeGuessForm').addEventListener('submit', checkGuess);
-  // Defer drawing until the router makes this module visible.
   newSensor();
   window.Module4 = { render };
 })();

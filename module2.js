@@ -1,26 +1,27 @@
-// Module 2: First-Order Frequency Response & Navigation
 (() => {
   'use strict';
 
-  const $ = (id) => document.getElementById(id);
+  const $ = id => document.getElementById(id);
   const TAU_MIN = 0.0001;
   const TAU_MAX = 1;
   const OMEGA_MIN = 0.01;
   const OMEGA_MAX = 10000;
   const RAD_TO_DEG = 180 / Math.PI;
   const state = { tau: 0.2, omega: 2 };
-  const modules = ['module-1', 'module-2', 'module-3', 'module-4', 'validation', 'about'];
+  const modules = ['home', 'module-1', 'module-2', 'module-3', 'module-4', 'control-p1', 'control-p2', 'validation', 'about'];
   const moduleNames = {
+    home: 'Home / Overview',
     'module-1': '01 / First-Order Time Response',
     'module-2': '02 / First-Order Frequency Response',
     'module-3': '03 / Second-Order Response',
     'module-4': '04 / Guess the Sensor',
+    'control-p1': 'P1 / PID Playground',
+    'control-p2': 'P2 / Slow Sensor',
     validation: 'V / Validation Checks',
     about: 'About / Team 10'
   };
-  let currentModule = 'module-1';
+  let currentModule = 'home';
 
-  // First-order frequency response: M = 1 / sqrt(1 + (omega * tau)^2), phi = -atan(omega * tau)
   function magnitude(omega, tau) {
     return 1 / Math.sqrt(1 + (omega * tau) ** 2);
   }
@@ -77,19 +78,17 @@
     const phi = phase(state.omega, state.tau);
     const cutoff = 1 / state.tau;
     const error = (M - 1) * 100;
-    const items = [
+    ToolkitCharts.renderMetrics('freqMetrics', [
       ['Amplitude ratio (M)', sig(M, 5)],
       ['Phase shift (φ)', `${sig(phi * RAD_TO_DEG, 5)}°`],
-      ['Cutoff (ωc)', `${sig(cutoff, 5)} rad/s`],
+      ['Cutoff (ω<sub>c</sub>)', `${sig(cutoff, 5)} rad/s`],
       ['Dynamic error (δ)', `${sig(error, 5)}%`]
-    ];
-    $('freqMetrics').innerHTML = items.map(([label, value]) =>
-      `<div class="metric-item"><div class="metric-label">${label}</div><div class="metric-value mono">${value}</div></div>`
-    ).join('');
-    return { M, phi, cutoff, error };
+    ]);
+    return { M, phi, cutoff };
   }
 
   function drawSine(M, phi) {
+    const c = ToolkitCharts.colors();
     const period = 2 * Math.PI / state.omega;
     const end = 4 * period;
     const time = [];
@@ -106,25 +105,23 @@
     const inputPeak = Math.PI / (2 * state.omega);
     const outputPeak = (Math.PI / 2 - phi) / state.omega;
     const traces = [
-      { x: time, y: input, name: 'Input sin(ωt)', mode: 'lines', line: { color: '#4b5563', width: 2, dash: 'dash' } },
-      { x: time, y: output, name: 'Sensor output', mode: 'lines', line: { color: '#0f766e', width: 3 } }
+      { x: time, y: input, name: 'Input sin(ωt)', mode: 'lines', line: ToolkitCharts.line.setpoint },
+      { x: time, y: output, name: 'Sensor output', mode: 'lines', line: ToolkitCharts.line.process }
     ];
-    Plotly.react('frequencyPlot', traces, {
-      paper_bgcolor: '#ffffff', plot_bgcolor: '#ffffff',
-      font: { family: 'system-ui, sans-serif', size: 12, color: '#374151' },
+    ToolkitCharts.draw('frequencyPlot', traces, {
       margin: { l: 50, r: 15, t: 44, b: 48 },
-      legend: { orientation: 'h', x: 0, y: 1.18 },
-      xaxis: { title: { text: 'Time (s)' }, range: [0, end], gridcolor: '#e5e7eb', zeroline: false, fixedrange: true },
-      yaxis: { title: { text: 'Amplitude' }, range: [-1.18, 1.18], gridcolor: '#e5e7eb', zeroline: false, fixedrange: true },
+      xaxis: { title: { text: 'Time (s)' }, range: [0, end] },
+      yaxis: { title: { text: 'Amplitude' }, range: [-1.18, 1.18] },
       shapes: [
-        { type: 'line', x0: inputPeak, x1: inputPeak, y0: -1, y1: 1, line: { color: '#a1a1aa', width: 1, dash: 'dot' } },
-        { type: 'line', x0: outputPeak, x1: outputPeak, y0: -1, y1: 1, line: { color: '#0f766e', width: 1, dash: 'dot' } }
+        { type: 'line', x0: inputPeak, x1: inputPeak, y0: -1, y1: 1, line: { color: c.mutedLine, width: 1, dash: 'dot' } },
+        { type: 'line', x0: outputPeak, x1: outputPeak, y0: -1, y1: 1, line: { color: c.accent, width: 1, dash: 'dot' } }
       ]
-    }, { responsive: true, displayModeBar: false });
+    });
     $('frequencyNote').textContent = `At ${sig(state.omega, 4)} rad/s (${sig(state.omega / (2 * Math.PI), 4)} Hz), the output amplitude is ${sig(M, 4)} of the input with ${sig(-phi * RAD_TO_DEG, 4)}° lag (${sig(outputPeak - inputPeak, 4)} s).`;
   }
 
   function drawBode(cutoff) {
+    const c = ToolkitCharts.colors();
     const low = Math.min(cutoff, state.omega) / 18;
     const high = Math.max(cutoff, state.omega) * 18;
     const x = [];
@@ -139,7 +136,6 @@
       magDb.push(20 * Math.log10(magnitude(w, state.tau)));
       phaseDeg.push(phase(w, state.tau) * RAD_TO_DEG);
     }
-    const axis = { gridcolor: '#e5e7eb', zeroline: false, fixedrange: true, linecolor: '#9ca3af' };
     const decadeStep = Math.max(1, Math.ceil((logHigh - logLow) / 5));
     const frequencyTicks = [];
     const frequencyLabels = [];
@@ -151,29 +147,27 @@
     const frequencyAxis = { tickmode: 'array', tickvals: frequencyTicks, ticktext: frequencyLabels };
     const cutoffDb = 20 * Math.log10(1 / Math.SQRT2);
     const traces = [
-      { x, y: magDb, name: 'Magnitude', mode: 'lines', line: { color: '#0f766e', width: 2.5 }, xaxis: 'x', yaxis: 'y', hovertemplate: 'ω = %{x:.3g} rad/s<br>%{y:.2f} dB<extra></extra>' },
-      { x, y: phaseDeg, name: 'Phase', mode: 'lines', line: { color: '#3f5d87', width: 2.5 }, xaxis: 'x2', yaxis: 'y2', hovertemplate: 'ω = %{x:.3g} rad/s<br>%{y:.1f}°<extra></extra>' },
-      { x: [cutoff], y: [cutoffDb], name: 'Cutoff', mode: 'markers', marker: { color: '#ae3e35', size: 8 }, showlegend: false, xaxis: 'x', yaxis: 'y', hovertemplate: 'Cutoff: %{x:.3g} rad/s<extra></extra>' },
-      { x: [state.omega], y: [20 * Math.log10(magnitude(state.omega, state.tau))], name: 'Selected frequency', mode: 'markers', marker: { color: '#9b692c', size: 10, line: { color: '#fff', width: 1 } }, showlegend: false, xaxis: 'x', yaxis: 'y', hovertemplate: 'Input ω = %{x:.3g} rad/s<br>%{y:.2f} dB<extra></extra>' },
-      { x: [state.omega], y: [phase(state.omega, state.tau) * RAD_TO_DEG], name: 'Selected phase', mode: 'markers', marker: { color: '#9b692c', size: 10, line: { color: '#fff', width: 1 } }, showlegend: false, xaxis: 'x2', yaxis: 'y2', hovertemplate: 'Input ω = %{x:.3g} rad/s<br>%{y:.1f}°<extra></extra>' }
+      { x, y: magDb, name: 'Magnitude', mode: 'lines', line: { color: c.accent, width: 2.5 }, xaxis: 'x', yaxis: 'y', hovertemplate: 'ω = %{x:.3g} rad/s<br>%{y:.2f} dB<extra></extra>' },
+      { x, y: phaseDeg, name: 'Phase', mode: 'lines', line: { color: c.secondary, width: 2.5 }, xaxis: 'x2', yaxis: 'y2', hovertemplate: 'ω = %{x:.3g} rad/s<br>%{y:.1f}°<extra></extra>' },
+      { x: [cutoff], y: [cutoffDb], name: 'Cutoff', mode: 'markers', marker: { color: c.danger, size: 8 }, showlegend: false, xaxis: 'x', yaxis: 'y', hovertemplate: 'Cutoff: %{x:.3g} rad/s<extra></extra>' },
+      { x: [state.omega], y: [20 * Math.log10(magnitude(state.omega, state.tau))], name: 'Selected frequency', mode: 'markers', marker: { color: c.warning, size: 10, line: { color: c.markerBorder, width: 1.5 } }, showlegend: false, xaxis: 'x', yaxis: 'y', hovertemplate: 'Input ω = %{x:.3g} rad/s<br>%{y:.2f} dB<extra></extra>' },
+      { x: [state.omega], y: [phase(state.omega, state.tau) * RAD_TO_DEG], name: 'Selected phase', mode: 'markers', marker: { color: c.warning, size: 10, line: { color: c.markerBorder, width: 1.5 } }, showlegend: false, xaxis: 'x2', yaxis: 'y2', hovertemplate: 'Input ω = %{x:.3g} rad/s<br>%{y:.1f}°<extra></extra>' }
     ];
-    Plotly.react('bodePlot', traces, {
-      paper_bgcolor: '#fff', plot_bgcolor: '#fff',
-      font: { family: 'system-ui, sans-serif', color: '#374151', size: 11 },
+    ToolkitCharts.draw('bodePlot', traces, {
       showlegend: false,
       margin: { l: 62, r: 20, t: 39, b: 54 },
-      xaxis: { ...axis, ...frequencyAxis, type: 'log', range: [logLow, logHigh], domain: [0, 1], anchor: 'y', showticklabels: false },
-      xaxis2: { ...axis, ...frequencyAxis, type: 'log', range: [logLow, logHigh], domain: [0, 1], anchor: 'y2', title: { text: 'Angular frequency ω (rad/s)' } },
-      yaxis: { ...axis, domain: [0.58, 1], title: { text: 'Gain (dB)' }, rangemode: 'tozero' },
-      yaxis2: { ...axis, domain: [0, 0.39], title: { text: 'Phase (°)' }, range: [-95, 5] },
+      xaxis: { ...frequencyAxis, type: 'log', range: [logLow, logHigh], domain: [0, 1], anchor: 'y', showticklabels: false },
+      xaxis2: { ...frequencyAxis, type: 'log', range: [logLow, logHigh], domain: [0, 1], anchor: 'y2', title: { text: 'Angular frequency ω (rad/s)' } },
+      yaxis: { domain: [0.58, 1], title: { text: 'Gain (dB)' }, rangemode: 'tozero' },
+      yaxis2: { domain: [0, 0.39], title: { text: 'Phase (°)' }, range: [-95, 5] },
       shapes: [
-        { type: 'line', xref: 'x', yref: 'paper', x0: cutoff, x1: cutoff, y0: 0, y1: 1, line: { color: '#ae3e35', dash: 'dot', width: 1.5 } },
-        { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: cutoffDb, y1: cutoffDb, line: { color: '#b1b6b2', dash: 'dot', width: 1 } }
+        { type: 'line', xref: 'x', yref: 'paper', x0: cutoff, x1: cutoff, y0: 0, y1: 1, line: { color: c.danger, dash: 'dot', width: 1.5 } },
+        { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: cutoffDb, y1: cutoffDb, line: { color: c.mutedLine, dash: 'dot', width: 1 } }
       ],
       annotations: [
-        { xref: 'x', yref: 'paper', x: cutoff, y: 1.06, text: 'ωc', showarrow: false, font: { color: '#ae3e35', size: 12 } }
+        { xref: 'x', yref: 'paper', x: cutoff, y: 1.06, text: 'ω<sub>c</sub>', showarrow: false, font: { color: c.danger, size: 12 } }
       ]
-    }, { responsive: true, displayModeBar: false });
+    });
     $('bodeNote').textContent = `Cutoff ωc = ${sig(cutoff, 4)} rad/s (${sig(cutoff / (2 * Math.PI), 4)} Hz). Red line: cutoff (−3.01 dB, −45°). Amber points: selected input frequency.`;
   }
 
@@ -199,14 +193,11 @@
     const tau = maxTau(hz, error);
     const lag = -phase(2 * Math.PI * phaseHz, tau) * RAD_TO_DEG;
     const atLimit = (magnitude(2 * Math.PI * hz, tau) - 1) * 100;
-    const items = [
+    ToolkitCharts.renderMetrics('designResults', [
       ['Maximum time constant', `${sig(tau * 1000, 5)} ms`],
       [`Phase lag at ${sig(phaseHz)} Hz`, `${sig(lag, 5)}°`],
       ['Error at design limit', `${sig(atLimit, 5)}%`]
-    ];
-    $('designResults').innerHTML = items.map(([label, val]) =>
-      `<div class="metric-item"><div class="metric-label">${label}</div><div class="metric-value mono">${val}</div></div>`
-    ).join('');
+    ]);
   }
 
   function frequencyBenchmarks() {
@@ -312,16 +303,14 @@
     $('suiteSummary').classList.toggle('pass', passed === 10 && checks.length === 10);
   }
 
-  function resizeVisiblePlots() {
-    if (typeof Plotly === 'undefined') return;
-    const ids = currentModule === 'module-1' ? ['timePlot', 'logPlot'] :
-      currentModule === 'module-2' ? ['frequencyPlot', 'bodePlot'] :
-      currentModule === 'module-3' ? ['thirdResponsePlot', 'thirdPolePlot', 'thirdPhasePlot'] :
-      currentModule === 'module-4' ? ['challengePlot'] : [];
-    for (const id of ids) {
-      const plot = $(id);
-      if (plot && plot.data && plot.clientWidth > 0) Plotly.Plots.resize(plot);
-    }
+  function renderCurrentModule() {
+    if (currentModule === 'home' && window.PIDControl) window.PIDControl.renderHero();
+    if (currentModule === 'module-1' && window.Module1) window.Module1.updateAll();
+    if (currentModule === 'module-2') renderFrequency();
+    if (currentModule === 'module-3' && window.Module3) window.Module3.render();
+    if (currentModule === 'module-4' && window.Module4) window.Module4.render();
+    if (currentModule.startsWith('control-') && window.PIDControl) window.PIDControl.render(currentModule);
+    if (currentModule === 'validation') updateValidationSuite();
   }
 
   const sidebar = $('siteSidebar');
@@ -342,7 +331,7 @@
   function activateModule() {
     const wasMobileOpen = document.body.classList.contains('mobile-open');
     const hash = window.location.hash.slice(1);
-    currentModule = modules.includes(hash) ? hash : 'module-1';
+    currentModule = modules.includes(hash) ? hash : 'home';
     for (const id of modules) $(id).hidden = id !== currentModule;
     document.querySelectorAll('.module-nav-link').forEach(link => {
       const active = link.dataset.module === currentModule;
@@ -352,11 +341,7 @@
     });
     $('currentModuleName').textContent = moduleNames[currentModule];
     closeMobileMenu();
-    if (currentModule === 'module-2') renderFrequency();
-    if (currentModule === 'module-3' && window.Module3) window.Module3.render();
-    if (currentModule === 'module-4' && window.Module4) window.Module4.render();
-    if (currentModule === 'validation') updateValidationSuite();
-    requestAnimationFrame(resizeVisiblePlots);
+    renderCurrentModule();
     if (wasMobileOpen) requestAnimationFrame(() => {
       const heading = document.querySelector(`#${currentModule} h1`);
       if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
@@ -407,17 +392,6 @@
     })
   );
 
-  if (typeof ResizeObserver !== 'undefined') {
-    let resizeFrame = 0;
-    new ResizeObserver(() => {
-      cancelAnimationFrame(resizeFrame);
-      resizeFrame = requestAnimationFrame(() => {
-        if (typeof Plotly === 'undefined') return;
-        resizeVisiblePlots();
-      });
-    }).observe(appMain);
-  }
-
   attachSlider('freqTauSlider', 'tau');
   attachSlider('freqOmegaSlider', 'omega');
   attachNumber('freqTauNumber', 'tau', TAU_MIN, TAU_MAX);
@@ -429,6 +403,8 @@
   for (const id of ['designHz', 'designError', 'phaseHz']) {
     $(id).addEventListener('input', updateDesignCalculator);
   }
+
+  ToolkitCharts.onThemeChange(renderCurrentModule);
 
   syncControls();
   updateDesignCalculator();
