@@ -1,22 +1,25 @@
-# ENCS4380 — Dynamic Characteristics Toolkit
+# ENCS4380 — Flamseer Lab (Dynamics & Control Toolkit)
 
 Interactive web toolkit for **ENCS4380 Interfacing Techniques**, Birzeit University.
 
 **Instructor:** Dr. Wasel Ghanem  
-**Assignment:** Homework 1 — Dynamic Characteristics Interactive Toolkit  
+**Assignments:** Homework 1 (Sensor Dynamics) & Homework 2 Checkpoint (PID Control: P1 & P2)  
 **Group:** Team 10  
 **Project Pages URL:** https://motazalt.github.io/encs4380-dynamics-flameseer/
 
 ## Overview
 
+- **Home — Interactive Overview:** Live RK4 Response Monitor comparing first-order step, PID closed-loop tracking, and slow-sensor feedback lag, with quick navigation to all modules and light/dark theme support.
 - **Module 1 — First-Order Time Response:** Step/ramp responses, 63.2% and 95% markers, ramp lag and steady-state error, and a sampled error-fraction plot on a logarithmic axis. The time window follows τ, and the natural-log slope is −1/τ.
 - **Module 2 — First-Order Frequency Response:** Input/output sines, amplitude ratio and phase lag, Bode plots with cutoff at 1/τ, and a dynamic-error calculator.
-- **Module 3 — Second-Order Response & State Space:** Linked ζ/ωₙ and m/b/k sliders, damping regimes, curve measurements, live A/B matrices, poles and eigenvalues, and a phase-plane trajectory. Either set of sliders can be used directly.
+- **Module 3 — Second-Order Response & State Space:** Linked ζ/ωₙ and m/b/k sliders, damping regimes, curve measurements, live A/B matrices, poles and eigenvalues, and a phase-plane trajectory.
 - **Module 4 — Guess the Sensor:** Random hidden first-order step/sine and underdamped second-order step sensors, noisy measurements, hints, true/estimated response overlays, and session scoring.
-- **Validation Suite:** All six lecture checks, comprising ten numerical comparisons, with a Run Checks button.
+- **P1 — PID Playground (`#control-p1`):** Interactive `Kp`, `Ki`, and `Kd` tuning on Module 1 or Module 3 plants with actuator limits (`±umax`), live rise time, peak time, overshoot, settling time, steady-state error, and closed-loop validation checks.
+- **P2 — Slow Sensor in the Feedback Loop (`#control-p2`):** Fast Sensor, Overshoot, and Sustained Oscillation presets comparing true plant output `y` against a delayed first-order sensor reading `ym`.
+- **Validation Suite:** All six Homework 1 lecture checks (10 numerical comparisons) plus the Homework 2 closed-loop PID validation checks.
 - **About & Team:** Course and project information, module ownership, a usage guide, and model/measurement conventions.
 
-Modules 1–3 include a “Predict, then check” prompt. The sidebar collapses on desktop and becomes a keyboard-accessible drawer on mobile.
+Modules 1–3, P1, and P2 each include a “Predict, then check” prompt. The interface supports persistent Light and Dark modes, a collapsible desktop sidebar, and a keyboard-accessible mobile drawer.
 
 ## Run locally
 
@@ -36,29 +39,29 @@ For GitHub Pages, upload the **contents** of this directory to the repository's 
 | --- | --- | --- |
 | Motaz Tayseer | 1231596 | Module 1 — First-order time response |
 | Karam Naji | 1230062 | Module 2 — First-order frequency response |
-| Nidal AbuHammad | 1231481 | Module 3 — Second-order response and state space |
+| Nidal AbuHammad | 1231481 | Module 3 — Second-order & state space; P1 & P2 PID control |
 | Ameer AbdelJabbar | 1231192 | Module 4 — Guess the sensor |
 
-## Measurements and scoring
+## Measurements, simulation, and scoring
 
-For Module 3, m is in kg, b in N·s/m, k in N/m, and ωₙ in rad/s. The force step F₀ = kK N gives final displacement K metres. Rise time is the first 10%–90% transition; settling time is the last entry into the ±2% band. Peak time and overshoot come from sampled response values, including local refinement near the peak. Peaks below 0.01% have no visible-peak marker and do not extend the time window. At ζ = 0, the system never settles.
-
-Each challenge round is worth 100 points. Estimate τ for a first-order sensor, or both ζ and ωₙ for a second-order sensor. Every estimate must be within 10% of its true value for full marks. Otherwise, partial credit decreases linearly with the largest relative error, reaching zero at 100% error. Only one valid submission counts per round. Hints do not reduce the score; totals reset on page reload.
-
-First-order sensors randomize both K and τ. On sine rounds, use phase lag relative to the known input to estimate τ, since K is hidden. Sine rounds keep 0.35 ≤ ωτ ≤ 2.5 to avoid excessive sensitivity when reading phase lag. After submission, first-order estimated curves use the revealed true K. Second-order challenge sensors use 0.15 ≤ ζ < 0.8 so overshoot and peak-time methods apply. Step windows have random padding.
+- **Closed-loop RK4 solver (P1 & P2):** Uses the first- and second-order plant differential equations with a 0.05 s derivative filter on the feedback signal and actuator clipping at `±umax`. P2 adds a first-order sensor state (`τs dy_m/dt + y_m = y`) in the feedback path.
+- **Module 3 conventions:** `m` is in kg, `b` in N·s/m, `k` in N/m, and `ωₙ` in rad/s. Force step `F₀ = kK` N gives final displacement `K` metres. Rise time is the first 10%–90% transition; settling time is the last entry into the ±2% band. At `ζ = 0`, the system never settles.
+- **Challenge scoring (Module 4):** Each round is worth 100 points. Estimates within 10% of every true parameter earn full marks; partial credit decreases linearly with the largest relative error, reaching zero at 100% error. Totals reset on page reload.
 
 ## Project structure
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | Modules, validation, About tab, and controls |
-| `styles.css` | Responsive interface and sidebar |
-| `app.js` | Module 1 |
-| `module2.js` | Module 2, validation dashboard, and shared navigation |
+| `index.html` | Homepage, modules 1–4, P1 & P2, validation, and About views |
+| `styles.css` | Light/dark theme tokens, responsive interface, and sidebar |
+| `charts.js` | Theme manager, shared Plotly styling, metric renderer, and container resizing |
+| `module1.js` | Module 1 first-order time response |
+| `module2.js` | Module 2 frequency response, validation dashboard, and shared navigation |
 | `module3.js` | Module 3 dynamics and state space |
-| `module4.js` | Challenge generation, response overlays, and scoring |
+| `module4.js` | Module 4 challenge generation, response overlays, and scoring |
+| `control.js` | P1 & P2 closed-loop RK4 simulator, validation checks, and homepage preview |
 | `plotly.min.js` | Bundled Plotly library |
-| `screenshots/` | Screenshots of this version |
+| `screenshots/` | Interface screenshots |
 
 ## Screenshots
 
