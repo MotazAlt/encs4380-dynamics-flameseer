@@ -22,6 +22,7 @@
   <script defer src="module4.js"></script>
   <script defer src="control.js"></script>
   <script defer src="control-p3p4.js"></script>
+  <script defer src="control-bonus.js"></script>
 </head>
 <body>
   <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -108,6 +109,9 @@
           </a>
           <a href="#control-p4" class="module-nav-link" data-module="control-p4" aria-label="PID Tuning Challenge" title="Tuning Challenge">
             <span class="module-number">P4</span><span class="module-link-copy"><strong>Tuning Challenge</strong><small>Hidden plant · Scoring</small></span>
+          </a>
+          <a href="#control-bonus" class="module-nav-link" data-module="control-bonus" aria-label="Ziegler–Nichols tuning bonus" title="Ziegler–Nichols Bonus">
+            <span class="module-number">+</span><span class="module-link-copy"><strong>ZN Tuning Bonus</strong><small>Ultimate gain · PID rules</small></span>
           </a>
         </nav>
         <div class="sidebar-separator" role="presentation"></div>
@@ -298,6 +302,10 @@
                 <div class="suite-bottom"><span>Start tuning</span><svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></div>
               </a>
             </div>
+            <a class="home-utility-card zn-home-bonus" href="#control-bonus">
+              <div><h3>Bonus / Ziegler–Nichols PID Tuning</h3><p>Find the sustained-oscillation gain, read the oscillation period, and compare the resulting PID design against P-only control.</p></div>
+              <span class="home-utility-arrow" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></span>
+            </a>
           </section>
 
           <div class="workflow-strip">
@@ -1192,6 +1200,94 @@
           <p class="challenge-footnote">One random plant per round. Each passed requirement awards one third of the round's 100 points (34 / 33 / 33); only improvements increase your total. Reveal the hidden parameters after a test.</p>
         </section>
 
+        <section id="control-bonus" class="module-view" aria-label="Bonus: Ziegler–Nichols Tuning" hidden>
+          <p class="eyebrow">BONUS / Classic Ziegler–Nichols · ultimate-gain method</p>
+          <section class="title-section">
+            <div>
+              <h1>Ziegler–Nichols PID Tuning</h1>
+              <p class="subtitle">Increase proportional gain until a sustained oscillation appears. Find the critical gain K<sub>u</sub>, measure the period P<sub>u</sub>, then apply the classic PID tuning rules. This experiment reuses Module 3's second-order plant and P2's lagging sensor.</p>
+            </div>
+            <div class="equations">
+              <p>G(s) = Kω<sub>n</sub>² / (s² + 2ζω<sub>n</sub>s + ω<sub>n</sub>²)</p>
+              <p>H(s) = 1 / (τ<sub>s</sub>s + 1)</p>
+            </div>
+          </section>
+          <section class="card predict-box" aria-labelledby="zn-predict-title">
+            <div class="predict-text">
+              <h2 id="zn-predict-title">Predict, then check</h2>
+              <p>With I = 0 and D = 0, what happens when the proportional gain reaches the ultimate gain K<sub>u</sub>?</p>
+            </div>
+            <div class="predict-controls">
+              <select id="zn-prediction" aria-label="Predict P-only response at the ultimate gain">
+                <option value="">Choose your prediction</option>
+                <option value="correct">Oscillations continue at nearly constant amplitude</option>
+                <option value="decay">The output always settles faster</option>
+                <option value="error">The step error must become exactly zero</option>
+              </select>
+              <button id="zn-check-prediction" type="button">Check Answer</button>
+            </div>
+            <p id="zn-prediction-feedback" class="feedback" aria-live="polite"></p>
+          </section>
+          <section class="card" aria-labelledby="zn-controls-title">
+            <div class="controls-top">
+              <div>
+                <h2 id="zn-controls-title">1 / Find the sustained oscillation</h2>
+                <p class="muted">Start with P-only. Move K<sub>p</sub> towards the critical value or use Find Critical Gain. The plant gain K = 1 and natural frequency ω<sub>n</sub> = 2 rad/s are fixed for this demonstration.</p>
+              </div>
+              <div class="preset-group">
+                <button class="btn-outline" id="zn-reset" type="button">Reset Example</button>
+                <button id="zn-find" type="button">Find Critical Gain</button>
+              </div>
+            </div>
+            <div class="sliders-grid">
+              <div class="slider-item">
+                <div class="slider-header"><label for="zn-kp">P-only gain (K<sub>p</sub>)</label><output class="mono" id="zn-kp-value" for="zn-kp">0.60</output></div>
+                <input id="zn-kp" type="range" min="0" max="8" step="any" value="0.6">
+                <div class="slider-bounds"><span>0</span><span>8</span></div>
+              </div>
+              <div class="slider-item">
+                <div class="slider-header"><label for="zn-zeta">Plant damping (ζ)</label><output class="mono" id="zn-zeta-value" for="zn-zeta">0.30</output></div>
+                <input id="zn-zeta" type="range" min="0.2" max="0.65" step="0.05" value="0.3">
+                <div class="slider-bounds"><span>0.20</span><span>0.65</span></div>
+              </div>
+              <div class="slider-item">
+                <div class="slider-header"><label for="zn-sensor">Sensor time constant (τ<sub>s</sub>)</label><output class="mono" id="zn-sensor-value" for="zn-sensor">0.50 s</output></div>
+                <input id="zn-sensor" type="range" min="0.35" max="1" step="0.05" value="0.5">
+                <div class="slider-bounds"><span>0.35 s</span><span>1.00 s</span></div>
+              </div>
+            </div>
+            <p class="zn-stage-note" id="zn-stability" role="status">Increase Kp to explore the onset of sustained oscillations.</p>
+            <p class="muted control-note">The critical gain is found from the linear characteristic equation (Routh–Hurwitz boundary); the displayed period is independently estimated from peaks in the RK4-simulated response. The critical-gain experiment uses an ideal, unsaturated proportional controller.</p>
+          </section>
+          <section class="card" aria-labelledby="zn-results-title">
+            <div class="card-header"><h2 id="zn-results-title">2 / Measure K<sub>u</sub> and P<sub>u</sub></h2><span class="small-label">ULTIMATE-GAIN TEST</span></div>
+            <div id="zn-measurements" class="metrics-grid"></div>
+            <p id="zn-period-note" class="muted control-note" role="status">Press Find Critical Gain to capture the oscillation.</p>
+          </section>
+          <section class="card" aria-labelledby="zn-design-title">
+            <div class="controls-top">
+              <div>
+                <h2 id="zn-design-title">3 / Apply the classic PID rules</h2>
+                <p class="muted">Parallel form: K<sub>p</sub> = 0.6K<sub>u</sub>, K<sub>i</sub> = 1.2K<sub>u</sub>/P<sub>u</sub>, K<sub>d</sub> = 0.075K<sub>u</sub>P<sub>u</sub>.</p>
+              </div>
+              <button id="zn-apply" type="button" disabled>Apply ZN PID</button>
+            </div>
+            <div id="zn-gains" class="metrics-grid"></div>
+            <p id="zn-design-note" class="muted control-note">Find the critical gain first. The tuned PID response will then be added to the comparison plot.</p>
+          </section>
+          <div class="plots-grid control-plots">
+            <section class="card plot-card">
+              <div class="card-header"><h2>P-only versus ZN PID</h2><span class="small-label">UNIT STEP · 24 s</span></div>
+              <div id="zn-response-plot" class="plot-box" role="img" aria-label="Step responses showing P-only oscillation and optionally Ziegler–Nichols tuned PID"></div>
+            </section>
+            <section class="card plot-card">
+              <div class="card-header"><h2>Control Effort</h2><span class="small-label">UNSATURATED MODEL</span></div>
+              <div id="zn-command-plot" class="plot-box" role="img" aria-label="P-only and tuned PID control input over time"></div>
+            </section>
+          </div>
+          <p class="challenge-footnote">Teaching example, not a hardware test: the classic Ziegler–Nichols rules can produce aggressive overshoot and are not automatically optimal. This model needs a second-order plant plus sensor lag for a P-only critical gain; a first-order plant with only a first-order sensor lag cannot reach sustained oscillation under positive P-only feedback.</p>
+        </section>
+
         <section id="validation" class="module-view" aria-label="Validation Checks Suite" hidden>
           <p class="eyebrow">V / Lecture benchmarks</p>
           <section class="title-section"><div>
@@ -1237,7 +1333,7 @@
               <div><dt>University</dt><dd>Birzeit University</dd></div>
               <div><dt>Course</dt><dd>ENCS4380 — Interfacing Techniques</dd></div>
               <div><dt>Instructor</dt><dd>Dr. Wasel Ghanem</dd></div>
-              <div><dt>Scope</dt><dd>Sensor Dynamics (Time, Frequency, Second-Order, Challenge)<br>Feedback Control (PID Playground, Slow Sensor, Digital PID &amp; Tuning Challenge)</dd></div>
+              <div><dt>Scope</dt><dd>Sensor Dynamics (Time, Frequency, Second-Order, Challenge)<br>Feedback Control (PID Playground, Slow Sensor, Digital PID, Tuning Challenge &amp; ZN Bonus)</dd></div>
             </dl>
           </section>
 
@@ -1247,9 +1343,9 @@
               <thead><tr><th scope="col">Team member</th><th scope="col">Module</th><th scope="col">Focus</th></tr></thead>
               <tbody>
                 <tr><th scope="row">Motaz Tayseer</th><td>01 · Time response</td><td>First-order step and ramp responses, time constant, lag, and log-error plot</td></tr>
-                <tr><th scope="row">Karam Naji</th><td>02 · Frequency response</td><td>Sine response, Bode plots, cutoff frequency, and dynamic-error calculator</td></tr>
-                <tr><th scope="row">Nidal AbuHammad</th><td>03 · Second-order response</td><td>Damping, curve measurements, state-space matrices, poles, and phase plane</td></tr>
-                <tr><th scope="row">Ameer AbdelJabbar</th><td>04 · Guess the sensor</td><td>Hidden random sensors, noisy measurements, hints, reveal overlays, and scoring</td></tr>
+                <tr><th scope="row">Karam Naji</th><td>02 · Frequency response; P3 · Digital PID</td><td>Sine response, Bode plots, cutoff frequency, and dynamic-error calculator</td></tr>
+                <tr><th scope="row">Nidal AbuHammad</th><td>03 · Second-order response; P1/P2 · PID</td><td>Damping, curve measurements, state-space matrices, poles, and phase plane</td></tr>
+                <tr><th scope="row">Ameer AbdelJabbar</th><td>04 · Guess the sensor; P4 · Tuning Challenge</td><td>Hidden random sensors, noisy measurements, hints, reveal overlays, and scoring</td></tr>
               </tbody>
             </table></div>
           </section>
@@ -1260,7 +1356,7 @@
               <li>Make a prediction in a module's “Predict, then check” box.</li>
               <li>Move the sliders and compare the plotted response with the live measurements.</li>
               <li>Use the Validation Suite to verify the analytical models against reference benchmarks.</li>
-              <li>Open <a href="#control-p1">P1</a>, <a href="#control-p2">P2</a>, <a href="#control-p3">P3: Digital PID</a>, and <a href="#control-p4">P4: Tuning Challenge</a> in the Control section.</li>
+              <li>Open <a href="#control-p1">P1</a>, <a href="#control-p2">P2</a>, <a href="#control-p3">P3: Digital PID</a>, and <a href="#control-p4">P4: Tuning Challenge</a>, and the <a href="#control-bonus">ZN tuning bonus</a> in the Control section.</li>
               <li>Try “Guess the sensor” and estimate τ, or ζ and ω<sub>n</sub>, from a noisy curve. Estimates within 10% receive full marks.</li>
             </ol>
           </section>

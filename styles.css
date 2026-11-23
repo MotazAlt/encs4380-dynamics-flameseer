@@ -2233,3 +2233,15 @@ tbody tr:hover {
   .p4-actions button { flex: 1 1 145px; }
   .p4-actions .muted { flex: 1 1 100%; }
 }
+
+
+/* Homework 2 bonus / Ziegler–Nichols — matches existing card, status and plot conventions. */
+.zn-home-bonus { margin-top: 12px; text-decoration: none; }
+.zn-stage-note { margin-top: 14px; padding: 11px 13px; border: 1px solid var(--accent-line); background: var(--surface-accent); border-radius: var(--radius-sm); color: var(--ink-soft); font-size: 14px; }
+.zn-stage-note.warning { border-color: var(--fail-border); background: var(--fail-bg); }
+#zn-gains .metric-value, #zn-measurements .metric-value { font-size: 1.02rem; }
+#control-bonus .controls-top { align-items: flex-start; }
+@media (max-width: 650px) {
+  #control-bonus .preset-group { width: 100%; }
+  #control-bonus .preset-group button { flex: 1; }
+}

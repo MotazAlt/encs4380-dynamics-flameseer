@@ -16,6 +16,14 @@ This document describes the tests performed on the locally packaged project. **I
 - Desktop and 390 px mobile layouts were visually inspected; the mobile document width stayed at 390 px with no horizontal overflow.
 - P3 charts rendered after switching light/dark theme.
 
+## Ziegler–Nichols bonus checks (new)
+
+- The new `#control-bonus` route opens from both the sidebar and the homepage.
+- Default plant `K=1`, `wn=2`, `zeta=0.3`, `tauS=0.5`: critical gain `Ku=1.560`, RK4 peak-derived period `Pu=2.480 s`, analytic period `2.484 s`.
+- Applying the classic parallel-form rule gives `Kp=0.936`, `Ki=0.755`, `Kd=0.290`. The simulated ZN PID peak is approximately `1.223` (22.3% overshoot) and the final-window error is around `0.01%` at 24 s.
+- The mobile bonus page at 390 px has no horizontal overflow. No JavaScript page errors occurred in the bonus workflow. P1–P4, validation, and home routes still navigate successfully.
+- The reference model is unsaturated by design, to distinguish sustained *linear marginal oscillations* from actuator-limited oscillations. The experiment uses a second-order plant with a lagged first-order feedback sensor because the original P2 first-order loop cannot reach a P-only marginal oscillation.
+
 ## Five-minute demonstration
 
 1. Open **P3 — Digital PID**. Keep `Kp=2`, `Ki=3`, `Kd=0`, and `Ts=0.02 s` to show a smooth output and rapid settling.

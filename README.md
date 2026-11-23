@@ -3,7 +3,7 @@
 Interactive web toolkit for **ENCS4380 Interfacing Techniques**, Birzeit University.
 
 **Instructor:** Dr. Wasel Ghanem  
-**Assignments:** Homework 1 (Sensor Dynamics) & Homework 2 (PID Control: P1–P4)  
+**Assignments:** Homework 1 (Sensor Dynamics) & Homework 2 (PID Control: P1–P4 + Ziegler–Nichols bonus)  
 **Group:** Team 10  
 **Project Pages URL:** https://motazalt.github.io/encs4380-dynamics-flameseer/
 
@@ -18,10 +18,11 @@ Interactive web toolkit for **ENCS4380 Interfacing Techniques**, Birzeit Univers
 - **P2 — Slow Sensor in the Feedback Loop (`#control-p2`):** Fast Sensor, Overshoot, and Sustained Oscillation presets comparing true plant output `y` against a delayed first-order sensor reading `ym`.
 - **P3 — Digital PID (`#control-p3`):** Sampled position-form PID with RK4 plant integration, zero-order-held PWM commands, adjustable sampling time, anti-windup toggle, live performance comparisons, and copyable Arduino sketch matching the current gains.
 - **P4 — PID Tuning Challenge (`#control-p4`):** Hidden random first- or second-order plants, overshoot/settling/error limits, pass/fail per requirement, unlimited retests, reveal and a per-round best-session score.
+- **Bonus — Ziegler–Nichols tuning (`#control-bonus`):** RK4 P-only oscillation experiment on a second-order plant with a slow first-order sensor. Finds the marginal P gain `Ku`, measures the observed peak-to-peak period `Pu`, and applies classic parallel-form Ziegler–Nichols PID gains to compare closed-loop responses.
 - **Validation Suite:** All six Homework 1 lecture checks (10 numerical comparisons) plus the Homework 2 closed-loop PID validation checks.
 - **About & Team:** Course and project information, module ownership, a usage guide, and model/measurement conventions.
 
-Modules 1–3 and P1–P4 each include a “Predict, then check” prompt. The interface supports persistent Light and Dark modes, a collapsible desktop sidebar, and a keyboard-accessible mobile drawer.
+Modules 1–3, P1–P4, and the ZN bonus include a “Predict, then check” prompt. The interface supports persistent Light and Dark modes, a collapsible desktop sidebar, and a keyboard-accessible mobile drawer.
 
 ## Run locally
 
@@ -42,13 +43,14 @@ For GitHub Pages, upload the **contents** of this directory to the repository's 
 | Motaz Tayseer | 1231596 | Module 1 — First-order time response |
 | Karam Naji | 1230062 | Module 2 — First-order frequency response; P3 Digital PID |
 | Nidal AbuHammad | 1231481 | Module 3 — Second-order & state space; P1 & P2 PID control |
-| Ameer AbdelJabbar | 1231192 | Module 4 — Guess the sensor; P4 PID Tuning Challeng  |
+| Ameer AbdelJabbar | 1231192 | Module 4 — Guess the sensor; P4 PID Tuning Challenge |
 
 
 ## Measurements, simulation, and scoring
 
 - **Closed-loop RK4 solver (P1 & P2):** Uses the first- and second-order plant differential equations with a 0.05 s derivative filter on the feedback signal and actuator clipping at `±umax`. P2 adds a first-order sensor state (`τs dy_m/dt + y_m = y`) in the feedback path.
 - **P3 digital PID:** `u[k] = Kp e[k] + Ki Ts Σ(e[j]) + Kd (e[k] − e[k−1])/Ts`, clipped to `±umax`. Commands are held constant between sensor readings while RK4 solves the first-order plant. Anti-windup conditionally freezes integral accumulation if saturation would worsen. A fast `Ts=0.02s` reference uses the same plant, gains and anti-windup. The Arduino example assumes normalized `analogRead(A0)` and drives PWM on D9 with direction on D8; adapt for actual hardware.
+- **ZN bonus model:** `G(s) = Kωn²/(s² + 2ζωn s + ωn²)` with `K=1`, `ωn=2 rad/s`, and feedback sensor `H(s)=1/(τs s+1)`. The P-only marginal-gain boundary satisfies `a2*a1=a3*a0` for the resulting cubic. The critical step response is numerically simulated using RK4 with `dt=0.005 s` (24 s window). `Pu` is measured from the last three peak-to-peak intervals and cross-checked with the theoretical period. The classic parallel PID gains are `Kp=0.6Ku`, `Ki=1.2Ku/Pu`, `Kd=0.075KuPu`. The controlled response uses a 0.05 s filtered derivative on sensor measurement as in P1. This is an ideal unsaturated simulation, not a hardware test.
 - **P4 scoring:** Each plant has three specifications, worth 34, 33 and 33 points (overshoot, settling, and end-window error within 1%). Retest as often as desired; only improvements to the round best add to session points. Revealing plant parameters locks that round. The hidden plants are random first- or second-order models; a filtered derivative and actuator clipping match the P1 physics.
 - **Module 3 conventions:** `m` is in kg, `b` in N·s/m, `k` in N/m, and `ωₙ` in rad/s. Force step `F₀ = kK` N gives final displacement `K` metres. Rise time is the first 10%–90% transition; settling time is the last entry into the ±2% band. At `ζ = 0`, the system never settles.
 - **Challenge scoring (Module 4):** Each round is worth 100 points. Estimates within 10% of every true parameter earn full marks; partial credit decreases linearly with the largest relative error, reaching zero at 100% error. Totals reset on page reload.
@@ -57,7 +59,7 @@ For GitHub Pages, upload the **contents** of this directory to the repository's 
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | Homepage, modules 1–4, P1–P4, validation, and About views |
+| `index.html` | Homepage, modules 1–4, P1–P4, bonus, validation, and About views |
 | `styles.css` | Light/dark theme tokens, responsive interface, and sidebar |
 | `charts.js` | Theme manager, shared Plotly styling, metric renderer, and container resizing |
 | `module1.js` | Module 1 first-order time response |
@@ -66,6 +68,8 @@ For GitHub Pages, upload the **contents** of this directory to the repository's 
 | `module4.js` | Module 4 challenge generation, response overlays, and scoring |
 | `control.js` | P1 & P2 closed-loop RK4 simulator, validation checks, and homepage preview |
 | `control-p3p4.js` | P3 sampled PID, Arduino code generation, P4 random-plant challenge, and scoring |
+| `control-bonus.js` | Ziegler–Nichols critical-gain model, RK4 simulation, period measurement and PID comparison |
+| `BONUS_ZIEGLER_NICHOLS.md` | Bonus explanation, default numbers, equations, and demo steps |
 | `plotly.min.js` | Bundled Plotly library |
 | `screenshots/` | Interface screenshots |
 
@@ -81,8 +85,9 @@ For GitHub Pages, upload the **contents** of this directory to the repository's 
 
 ![P3 — Digital PID](screenshots/control-p3.png)
 ![P4 — Tuning Challenge](screenshots/control-p4.png)
+![Bonus — Ziegler–Nichols Tuning](screenshots/control-bonus.png)
 
 ## AI use
 
-ChatGPT assisted with UI, implementation, and debugging.
+ChatGPT assisted with UI, implementation, debugging, and the Ziegler–Nichols bonus simulation. Team members are responsible for understanding and explaining the code and equations.
 
