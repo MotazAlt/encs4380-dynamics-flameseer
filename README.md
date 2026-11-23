@@ -89,5 +89,4 @@ For GitHub Pages, upload the **contents** of this directory to the repository's 
 
 ## AI use
 
-ChatGPT assisted with UI, implementation, debugging, and the Ziegler–Nichols bonus simulation. Team members are responsible for understanding and explaining the code and equations.
-
+ChatGPT assisted with UI, implementation, debugging. 
