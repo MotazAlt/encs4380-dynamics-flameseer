@@ -87,6 +87,3 @@ For GitHub Pages, upload the **contents** of this directory to the repository's 
 
 ChatGPT assisted with UI, implementation, and debugging.
 
-## Homework 2 completion note
-
-P1–P4 are implemented. The **"My system" micromouse motor page** still requires actual encoder/PWM step-test data (or a cited motor model) from the project team; this repository does not invent those values. The release, GitHub issues, individual commits, and course submission must be completed in GitHub by the team.
