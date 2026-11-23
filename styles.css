@@ -2180,3 +2180,56 @@ tbody tr:hover {
     transition: none !important;
   }
 }
+
+/* P3 / P4 — extend the same P1/P2 card, grid and theme tokens. */
+.control-toggle {
+  display: inline-flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 15px;
+  padding: 12px 14px;
+  max-width: 700px;
+  border: 1px solid var(--soft-line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+  cursor: pointer;
+}
+.control-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  flex: none;
+  margin-top: 2px;
+}
+.control-toggle span { display: grid; gap: 3px; }
+.control-toggle strong { color: var(--ink); font-size: 13px; }
+.control-toggle small { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.pid-code-wrap {
+  width: 100%;
+  max-height: 400px;
+  overflow: auto;
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--soft-line);
+  background: var(--surface-subtle);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  line-height: 1.65;
+  tab-size: 2;
+}
+.pid-code-wrap code { font-family: var(--mono); white-space: pre; }
+#p3-copy-status:not(:empty) { margin-top: 10px; }
+.p4-actions { margin-top: 20px; }
+.p4-actions .muted { font-size: 13px; }
+#p4-result-summary:not(:empty) { margin-top: 14px; }
+#p4-reveal-note { overflow-wrap: anywhere; }
+#control-p3 .formula-tag, #control-p4 .formula-tag { max-width: 100%; }
+@media (max-width: 720px) {
+  #control-p3 .pid-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #control-p3 .controls-top, #control-p4 .controls-top { align-items: flex-start; }
+  .pid-code-wrap { font-size: 11.5px; padding: 12px; }
+  .p4-actions { align-items: stretch; }
+  .p4-actions button { flex: 1 1 145px; }
+  .p4-actions .muted { flex: 1 1 100%; }
+}

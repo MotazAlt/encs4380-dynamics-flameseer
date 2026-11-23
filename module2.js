@@ -8,7 +8,7 @@
   const OMEGA_MAX = 10000;
   const RAD_TO_DEG = 180 / Math.PI;
   const state = { tau: 0.2, omega: 2 };
-  const modules = ['home', 'module-1', 'module-2', 'module-3', 'module-4', 'control-p1', 'control-p2', 'validation', 'about'];
+  const modules = ['home', 'module-1', 'module-2', 'module-3', 'module-4', 'control-p1', 'control-p2', 'control-p3', 'control-p4', 'validation', 'about'];
   const moduleNames = {
     home: 'Home / Overview',
     'module-1': '01 / First-Order Time Response',
@@ -17,6 +17,8 @@
     'module-4': '04 / Guess the Sensor',
     'control-p1': 'P1 / PID Playground',
     'control-p2': 'P2 / Slow Sensor',
+    'control-p3': 'P3 / Digital PID',
+    'control-p4': 'P4 / Tuning Challenge',
     validation: 'V / Validation Checks',
     about: 'About / Team 10'
   };
@@ -309,7 +311,8 @@
     if (currentModule === 'module-2') renderFrequency();
     if (currentModule === 'module-3' && window.Module3) window.Module3.render();
     if (currentModule === 'module-4' && window.Module4) window.Module4.render();
-    if (currentModule.startsWith('control-') && window.PIDControl) window.PIDControl.render(currentModule);
+    if (['control-p1', 'control-p2'].includes(currentModule) && window.PIDControl) window.PIDControl.render(currentModule);
+    if (['control-p3', 'control-p4'].includes(currentModule) && window.PIDExtras) window.PIDExtras.render(currentModule);
     if (currentModule === 'validation') updateValidationSuite();
   }
 

@@ -21,6 +21,7 @@
   <script defer src="module3.js"></script>
   <script defer src="module4.js"></script>
   <script defer src="control.js"></script>
+  <script defer src="control-p3p4.js"></script>
 </head>
 <body>
   <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -101,6 +102,12 @@
           </a>
           <a href="#control-p2" class="module-nav-link" data-module="control-p2" aria-label="Slow Sensor in the Feedback Loop" title="Slow Sensor">
             <span class="module-number">P2</span><span class="module-link-copy"><strong>Slow Sensor</strong><small>Feedback · Oscillation</small></span>
+          </a>
+          <a href="#control-p3" class="module-nav-link" data-module="control-p3" aria-label="Digital PID" title="Digital PID">
+            <span class="module-number">P3</span><span class="module-link-copy"><strong>Digital PID</strong><small>Sampling · Anti-windup</small></span>
+          </a>
+          <a href="#control-p4" class="module-nav-link" data-module="control-p4" aria-label="PID Tuning Challenge" title="Tuning Challenge">
+            <span class="module-number">P4</span><span class="module-link-copy"><strong>Tuning Challenge</strong><small>Hidden plant · Scoring</small></span>
           </a>
         </nav>
         <div class="sidebar-separator" role="presentation"></div>
@@ -243,7 +250,7 @@
           <section class="home-section" aria-labelledby="homeControlHeading">
             <div class="home-section-head">
               <h3 id="homeControlHeading">Feedback Control</h3>
-              <span>Modules P1 – P2</span>
+              <span>Modules P1 – P4</span>
             </div>
             <div class="suite-grid">
               <a class="suite-card" href="#control-p1">
@@ -267,6 +274,28 @@
                 <p>Compare the true plant output against a delayed sensor reading and observe how feedback lag drives overshoot and sustained oscillation.</p>
                 <div class="feature-tags"><span>True vs. measured</span><span>Lag presets</span><span>Instability</span></div>
                 <div class="suite-bottom"><span>Open slow sensor loop</span><svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></div>
+              </a>
+              <a class="suite-card" href="#control-p3">
+                <div class="suite-top">
+                  <span class="suite-icon teal"><svg class="icon" aria-hidden="true"><use href="#icon-clock"/></svg></span>
+                  <span class="suite-number">P3 / SAMPLED FEEDBACK</span>
+                  <span class="suite-arrow"><svg class="icon diagonal" aria-hidden="true"><use href="#icon-arrow"/></svg></span>
+                </div>
+                <h4>Digital PID</h4>
+                <p>See stair-step commands, change sampling time T<sub>s</sub>, switch anti-windup on or off, and generate matching Arduino code.</p>
+                <div class="feature-tags"><span>Sample-and-hold</span><span>Anti-windup</span><span>Copy Arduino sketch</span></div>
+                <div class="suite-bottom"><span>Open digital PID</span><svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></div>
+              </a>
+              <a class="suite-card" href="#control-p4">
+                <div class="suite-top">
+                  <span class="suite-icon teal"><svg class="icon" aria-hidden="true"><use href="#icon-target"/></svg></span>
+                  <span class="suite-number">P4 / CONTROL CHALLENGE</span>
+                  <span class="suite-arrow"><svg class="icon diagonal" aria-hidden="true"><use href="#icon-arrow"/></svg></span>
+                </div>
+                <h4>PID Tuning Challenge</h4>
+                <p>Tune gains for a hidden random first- or second-order plant. Meet overshoot, settling and error specifications to score points.</p>
+                <div class="feature-tags"><span>Random plant</span><span>Spec checks</span><span>Session scoring</span></div>
+                <div class="suite-bottom"><span>Start tuning</span><svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></div>
               </a>
             </div>
           </section>
@@ -954,6 +983,215 @@
           </section>
         </section>
 
+        <section id="control-p3" class="module-view" aria-label="P3: Digital PID" hidden>
+          <p class="eyebrow">P3 / PID control · discrete sampling</p>
+          <section class="title-section">
+            <div>
+              <h1>Digital PID</h1>
+              <p class="subtitle">Watch a sampled controller hold its command between updates. Increase T<sub>s</sub> to see how delayed decisions change stability and tracking.</p>
+            </div>
+            <div class="equations">
+              <p>e[k] = r − y[k]</p>
+              <p>u[k] = K<sub>p</sub>e[k] + K<sub>i</sub>T<sub>s</sub>Σe[j] + K<sub>d</sub>(e[k]−e[k−1])/T<sub>s</sub></p>
+            </div>
+          </section>
+          <section class="card predict-box" aria-labelledby="p3-predict-title">
+            <div class="predict-text">
+              <h2 id="p3-predict-title">Predict, then check</h2>
+              <p>Keep K<sub>p</sub> and K<sub>i</sub> fixed, but increase the sampling period T<sub>s</sub>. What usually happens to the response?</p>
+            </div>
+            <div class="predict-controls">
+              <select id="p3-prediction" aria-label="Select digital PID prediction">
+                <option value="">Choose your prediction</option>
+                <option value="correct">More lag, overshoot, or instability</option>
+                <option value="faster">It always gets faster and smoother</option>
+                <option value="same">Nothing changes</option>
+              </select>
+              <button id="p3-check-prediction" type="button">Check Answer</button>
+            </div>
+            <p id="p3-prediction-feedback" class="feedback" aria-live="polite"></p>
+          </section>
+          <section class="card" aria-labelledby="p3-controls-title">
+            <div class="controls-top">
+              <div>
+                <h2 id="p3-controls-title">Digital Controller Parameters</h2>
+                <p class="muted">Start at a short sample period, then compare with slow sampling. Both simulations use the same first-order plant and PID gains.</p>
+              </div>
+              <div class="preset-group third-presets">
+                <button class="btn-outline" type="button" data-p3-preset="fast">Fast Sampling</button>
+                <button class="btn-outline" type="button" data-p3-preset="medium">Moderate</button>
+                <button class="btn-outline" type="button" data-p3-preset="slow">Slow Sampling</button>
+              </div>
+            </div>
+            <div class="sliders-grid">
+              <div class="slider-item">
+                <div class="slider-header"><label for="p3-ts">Sampling time (T<sub>s</sub>)</label><output class="mono" id="p3-ts-value" for="p3-ts">0.02 s</output></div>
+                <input id="p3-ts" type="range" min="0.02" max="1.5" step="0.02" value="0.02">
+                <div class="slider-bounds"><span>0.02 s</span><span>1.50 s</span></div>
+              </div>
+              <div class="slider-item">
+                <div class="slider-header"><label for="p3-kp">Proportional gain (K<sub>p</sub>)</label><output class="mono" id="p3-kp-value" for="p3-kp">2</output></div>
+                <input id="p3-kp" type="range" min="0" max="15" step="0.1" value="2">
+                <div class="slider-bounds"><span>0</span><span>15</span></div>
+              </div>
+              <div class="slider-item">
+                <div class="slider-header"><label for="p3-ki">Integral gain (K<sub>i</sub>)</label><output class="mono" id="p3-ki-value" for="p3-ki">3</output></div>
+                <input id="p3-ki" type="range" min="0" max="12" step="0.1" value="3">
+                <div class="slider-bounds"><span>0</span><span>12</span></div>
+              </div>
+              <div class="slider-item">
+                <div class="slider-header"><label for="p3-kd">Derivative gain (K<sub>d</sub>)</label><output class="mono" id="p3-kd-value" for="p3-kd">0</output></div>
+                <input id="p3-kd" type="range" min="0" max="3" step="0.05" value="0">
+                <div class="slider-bounds"><span>0</span><span>3</span></div>
+              </div>
+              <div class="slider-item">
+                <div class="slider-header"><label for="p3-limit">Command limit (±u<sub>max</sub>)</label><output class="mono" id="p3-limit-value" for="p3-limit">12</output></div>
+                <input id="p3-limit" type="range" min="0.5" max="12" step="0.5" value="12">
+                <div class="slider-bounds"><span>0.5</span><span>12</span></div>
+              </div>
+              <div class="slider-item">
+                <div class="slider-header"><label for="p3-duration">Plot duration</label><output class="mono" id="p3-duration-value" for="p3-duration">12 s</output></div>
+                <input id="p3-duration" type="range" min="6" max="30" step="1" value="12">
+                <div class="slider-bounds"><span>6 s</span><span>30 s</span></div>
+              </div>
+            </div>
+            <div class="control-plant third-input-group">
+              <div class="control-plant-toolbar">
+                <h3>First-order plant · Module 1</h3>
+                <button id="p3-copy-plant" class="btn-outline" type="button">Import Current Plant Values</button>
+              </div>
+              <div class="sliders-grid">
+                <div class="slider-item">
+                  <div class="slider-header"><label for="p3-gain">Plant gain (K)</label><output class="mono" id="p3-gain-value" for="p3-gain">1</output></div>
+                  <input id="p3-gain" type="range" min="0.5" max="5" step="0.05" value="1">
+                  <div class="slider-bounds"><span>0.5</span><span>5</span></div>
+                </div>
+                <div class="slider-item">
+                  <div class="slider-header"><label for="p3-tau">Time constant (τ)</label><output class="mono" id="p3-tau-value" for="p3-tau">1 s</output></div>
+                  <input id="p3-tau" type="range" min="0.2" max="25" step="0.05" value="1">
+                  <div class="slider-bounds"><span>0.2 s</span><span>25 s</span></div>
+                </div>
+              </div>
+              <label class="control-toggle" for="p3-antiwindup"><input type="checkbox" id="p3-antiwindup" checked><span><strong>Anti-windup ON</strong><small>Pause integration when a saturated command would be pushed further into its limit.</small></span></label>
+            </div>
+          </section>
+          <section class="card" aria-label="Digital controller block diagram">
+            <div class="card-header"><h2>Sample-and-Hold Feedback Loop</h2></div>
+            <ol class="control-flow" aria-label="Forward path">
+              <li><span>Setpoint r</span></li><li><span>Sample y[k]</span></li><li><span>Digital PID</span></li>
+              <li><span>Limit ±u<sub>max</sub></span></li><li><span>Hold u[k]</span></li><li><span>Plant y(t)</span></li>
+            </ol>
+            <p class="control-return muted">Feedback: measure y at kT<sub>s</sub>; calculate u[k]; hold that constant command until the next sample. RK4 steps the plant between samples.</p>
+          </section>
+          <section class="card" aria-labelledby="p3-metrics-title">
+            <h2 id="p3-metrics-title">Sampled vs. Fast Reference</h2>
+            <div id="p3-metrics" class="metrics-grid pid-metrics"></div>
+            <p id="p3-metrics-note" class="muted control-note" role="status"></p>
+          </section>
+          <div class="plots-grid control-plots">
+            <section class="card plot-card">
+              <div class="card-header"><h2>Output and Setpoint</h2><span class="small-label">FAST REFERENCE: T<sub>s</sub> = 0.02 s</span></div>
+              <div id="p3-response-plot" class="plot-box" role="img" aria-label="Digital PID output compared with fast-sampling reference and setpoint"></div>
+            </section>
+            <section class="card plot-card">
+              <div class="card-header"><h2>Stair-Step Control Signal</h2><span class="small-label">ZERO-ORDER HOLD</span></div>
+              <div id="p3-command-plot" class="plot-box" role="img" aria-label="Stair-step sampled command with positive and negative actuator limits"></div>
+            </section>
+          </div>
+          <section class="card" aria-labelledby="p3-code-title">
+            <div class="controls-top">
+              <div><h2 id="p3-code-title">Arduino Loop Code</h2><p class="muted">Generated for the selected gains, T<sub>s</sub>, setpoint and actuator limit; the same conditional anti-windup rule as the simulation.</p></div>
+              <button id="p3-copy-code" class="btn-outline" type="button">Copy Arduino Code</button>
+            </div>
+            <pre class="pid-code-wrap"><code id="p3-code" class="mono" aria-label="Generated Arduino PID sketch"></code></pre>
+            <p id="p3-copy-status" class="feedback" role="status" aria-live="polite"></p>
+            <p class="muted control-note">Example wiring: analog sensor A0, PWM output D9, motor direction D8. Sensor and command are normalized for demonstration; adapt mapping, output pins, and motor-driver wiring to your hardware.</p>
+          </section>
+        </section>
+
+        <section id="control-p4" class="module-view" aria-label="P4: Tuning Challenge" hidden>
+          <p class="eyebrow">P4 / PID control · tuning challenge</p>
+          <section class="title-section">
+            <div>
+              <h1>Tuning Challenge</h1>
+              <p class="subtitle">A random first- or second-order plant is hiding behind the plot. Find PID gains that meet all three engineering specifications.</p>
+            </div>
+            <span class="formula-tag mono">Overshoot · Settling · Error</span>
+          </section>
+          <section class="card predict-box" aria-labelledby="p4-predict-title">
+            <div class="predict-text">
+              <h2 id="p4-predict-title">Predict, then check</h2>
+              <p>If a proportional-only controller stops short of its target, which PID term helps remove a step's steady-state error?</p>
+            </div>
+            <div class="predict-controls">
+              <select id="p4-prediction" aria-label="Select tuning prediction">
+                <option value="">Choose your prediction</option>
+                <option value="p">More P always guarantees zero error</option>
+                <option value="correct">Integral action (I)</option>
+                <option value="d">Derivative action (D) alone</option>
+              </select>
+              <button id="p4-check-prediction" type="button">Check Answer</button>
+            </div>
+            <p id="p4-prediction-feedback" class="feedback" aria-live="polite"></p>
+          </section>
+          <section class="card challenge-toolbar" aria-labelledby="p4-round-title">
+            <div>
+              <p class="challenge-kicker" id="p4-round-number">ROUND 01</p>
+              <h2 id="p4-round-title">Hidden Control Plant</h2>
+              <p id="p4-round-description" class="muted">Find gains that track a unit step without exceeding the specifications.</p>
+            </div>
+            <div class="challenge-toolbar-actions">
+              <div class="challenge-session"><small>SESSION SCORE</small><strong class="mono" id="p4-score">0 / 0</strong><span id="p4-score-detail">0 tested · 0 perfect rounds</span></div>
+              <button class="btn-outline" id="p4-new-round" type="button">New Plant</button>
+            </div>
+          </section>
+          <section class="card" aria-labelledby="p4-spec-title">
+            <div class="card-header"><h2 id="p4-spec-title">Target Specifications</h2><span id="p4-plant-type" class="small-label">HIDDEN MODEL</span></div>
+            <div id="p4-specs" class="metrics-grid"></div>
+            <p class="muted control-note">Unit step, actuator saturation ±12. “Zero” steady-state error is assessed within a 1% numerical tolerance at the end of the 16 s evaluation.</p>
+          </section>
+          <section class="card" aria-labelledby="p4-controls-title">
+            <div class="controls-top">
+              <div><h2 id="p4-controls-title">Tune the Controller</h2><p class="muted">Adjust K<sub>p</sub>, K<sub>i</sub>, K<sub>d</sub>, then test. You can retry this plant without losing your best score.</p></div>
+              <div class="preset-group third-presets">
+                <button class="btn-outline" type="button" data-p4-preset="p">P Only</button>
+                <button class="btn-outline" type="button" data-p4-preset="pi">PI Start</button>
+                <button class="btn-outline" type="button" data-p4-preset="pid">PID Start</button>
+              </div>
+            </div>
+            <div class="sliders-grid">
+              <div class="slider-item"><div class="slider-header"><label for="p4-kp">Proportional gain (K<sub>p</sub>)</label><output id="p4-kp-value" class="mono" for="p4-kp">2</output></div><input id="p4-kp" type="range" min="0" max="15" step="0.1" value="2"><div class="slider-bounds"><span>0</span><span>15</span></div></div>
+              <div class="slider-item"><div class="slider-header"><label for="p4-ki">Integral gain (K<sub>i</sub>)</label><output id="p4-ki-value" class="mono" for="p4-ki">0</output></div><input id="p4-ki" type="range" min="0" max="12" step="0.1" value="0"><div class="slider-bounds"><span>0</span><span>12</span></div></div>
+              <div class="slider-item"><div class="slider-header"><label for="p4-kd">Derivative gain (K<sub>d</sub>)</label><output id="p4-kd-value" class="mono" for="p4-kd">0</output></div><input id="p4-kd" type="range" min="0" max="4" step="0.1" value="0"><div class="slider-bounds"><span>0</span><span>4</span></div></div>
+            </div>
+            <div class="challenge-actions p4-actions">
+              <button id="p4-test" type="button">Test Tuning</button>
+              <button id="p4-reveal" class="btn-outline" type="button" disabled>Reveal Plant</button>
+              <span class="muted" id="p4-test-note" role="status">Test your first tuning to see measured performance.</span>
+            </div>
+            <p id="p4-reveal-note" class="challenge-hint" hidden></p>
+          </section>
+          <section class="card" aria-labelledby="p4-results-title">
+            <div class="card-header"><h2 id="p4-results-title">Specification Check</h2><span class="small-label">PASS / FAIL PER TARGET</span></div>
+            <div class="table-wrap"><table>
+              <thead><tr><th scope="col">Requirement</th><th scope="col">Limit</th><th scope="col">Measured</th><th scope="col">Status</th></tr></thead>
+              <tbody id="p4-results"><tr><td colspan="4" class="muted">Tune the gains, then press Test Tuning.</td></tr></tbody>
+            </table></div>
+            <p id="p4-result-summary" class="feedback" role="status"></p>
+          </section>
+          <div class="plots-grid control-plots">
+            <section class="card plot-card">
+              <div class="card-header"><h2>Closed-Loop Response</h2></div>
+              <div id="p4-response-plot" class="plot-box" role="img" aria-label="Tuning challenge plant response and setpoint"></div>
+            </section>
+            <section class="card plot-card">
+              <div class="card-header"><h2>Control Effort and Limits</h2></div>
+              <div id="p4-command-plot" class="plot-box" role="img" aria-label="Tuning challenge controller output and actuator limits"></div>
+            </section>
+          </div>
+          <p class="challenge-footnote">One random plant per round. Each passed requirement awards one third of the round's 100 points (34 / 33 / 33); only improvements increase your total. Reveal the hidden parameters after a test.</p>
+        </section>
+
         <section id="validation" class="module-view" aria-label="Validation Checks Suite" hidden>
           <p class="eyebrow">V / Lecture benchmarks</p>
           <section class="title-section"><div>
@@ -999,7 +1237,7 @@
               <div><dt>University</dt><dd>Birzeit University</dd></div>
               <div><dt>Course</dt><dd>ENCS4380 — Interfacing Techniques</dd></div>
               <div><dt>Instructor</dt><dd>Dr. Wasel Ghanem</dd></div>
-              <div><dt>Scope</dt><dd>Sensor Dynamics (Time, Frequency, Second-Order, Challenge)<br>Feedback Control (PID Playground &amp; Slow Sensor Loop)</dd></div>
+              <div><dt>Scope</dt><dd>Sensor Dynamics (Time, Frequency, Second-Order, Challenge)<br>Feedback Control (PID Playground, Slow Sensor, Digital PID &amp; Tuning Challenge)</dd></div>
             </dl>
           </section>
 
@@ -1022,7 +1260,7 @@
               <li>Make a prediction in a module's “Predict, then check” box.</li>
               <li>Move the sliders and compare the plotted response with the live measurements.</li>
               <li>Use the Validation Suite to verify the analytical models against reference benchmarks.</li>
-              <li>Open <a href="#control-p1">P1: PID Playground</a> or <a href="#control-p2">P2: Slow Sensor</a> in the Control section.</li>
+              <li>Open <a href="#control-p1">P1</a>, <a href="#control-p2">P2</a>, <a href="#control-p3">P3: Digital PID</a>, and <a href="#control-p4">P4: Tuning Challenge</a> in the Control section.</li>
               <li>Try “Guess the sensor” and estimate τ, or ζ and ω<sub>n</sub>, from a noisy curve. Estimates within 10% receive full marks.</li>
             </ol>
           </section>
