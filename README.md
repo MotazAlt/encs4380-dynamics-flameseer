@@ -40,11 +40,10 @@ For GitHub Pages, upload the **contents** of this directory to the repository's 
 | Team member | Student ID | Module |
 | --- | --- | --- |
 | Motaz Tayseer | 1231596 | Module 1 — First-order time response |
-| Karam Naji | 1230062 | Module 2 — First-order frequency response |
+| Karam Naji | 1230062 | Module 2 — First-order frequency response; P3 Digital PID |
 | Nidal AbuHammad | 1231481 | Module 3 — Second-order & state space; P1 & P2 PID control |
-| Ameer AbdelJabbar | 1231192 | Module 4 — Guess the sensor |
+| Ameer AbdelJabbar | 1231192 | Module 4 — Guess the sensor; P4 PID Tuning Challeng  |
 
-**P3/P4 module owners:** Pending the team’s GitHub Issue assignments; update this table once confirmed.
 
 ## Measurements, simulation, and scoring
 
